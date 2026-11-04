@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { MobileContainer } from './components/layout/MobileContainer';
 import { OnboardingScreen } from './components/onboarding/OnboardingScreen';
 import { HomeScreen } from './components/home/HomeScreen';
@@ -11,31 +12,11 @@ import { useTasks } from './hooks/useTasks';
 import { useAuth } from './context/AuthContext';
 import type { Task } from './types/task';
 
-type Screen = 'onboarding' | 'home' | 'search' | 'notifications' | 'settings';
-
 export function App() {
   const { user, isAuthenticated, updateProfile } = useAuth();
-
-  const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const screenParam = params.get('screen') as Screen | null;
-      if (screenParam && ['onboarding', 'home', 'search', 'notifications', 'settings'].includes(screenParam)) {
-        return screenParam;
-      }
-    }
-    return 'onboarding';
-  });
-
-  // When user is authenticated and hasOnboarded is true in MongoDB, automatically show home screen
-  useEffect(() => {
-    if (user?.hasOnboarded && currentScreen === 'onboarding') {
-      const params = new URLSearchParams(window.location.search);
-      if (!params.get('screen')) {
-        setCurrentScreen('home');
-      }
-    }
-  }, [user?.hasOnboarded, currentScreen]);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const {
     tasks,
@@ -54,17 +35,13 @@ export function App() {
 
   // Fetch data whenever user arrives at the Home screen and is authenticated
   useEffect(() => {
-    if (currentScreen === 'home' && isAuthenticated) {
+    if (location.pathname === '/home' && isAuthenticated) {
       refreshTasks();
     }
-  }, [currentScreen, refreshTasks, isAuthenticated]);
+  }, [location.pathname, refreshTasks, isAuthenticated]);
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('modal') === 'add' || params.get('modal') === 'edit';
-    }
-    return false;
+    return searchParams.get('modal') === 'add' || searchParams.get('modal') === 'edit';
   });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
@@ -82,7 +59,7 @@ export function App() {
         console.warn('[Onboarding] Failed to persist onboarding status to MongoDB:', err);
       });
     }
-    setCurrentScreen('home');
+    navigate('/home');
   };
 
   // Open TaskModal freely - login is only required when submitting "Create Task"
@@ -142,48 +119,73 @@ export function App() {
 
   return (
     <MobileContainer>
-      {currentScreen === 'onboarding' && (
-        <OnboardingScreen onGetStarted={handleGetStarted} />
-      )}
-
-      {currentScreen === 'home' && (
-        <HomeScreen
-          tasks={displayedTasks}
-          weeklyStats={weeklyStats}
-          selectedDate={selectedDate}
-          showAllTasks={showAllTasks}
-          onSelectDate={setSelectedDate}
-          onToggleShowAll={() => setShowAllTasks(!showAllTasks)}
-          onSearchClick={() => setCurrentScreen('search')}
-          onNotificationClick={() => setCurrentScreen('notifications')}
-          onSettingsClick={() => setCurrentScreen('settings')}
-          onAddTaskClick={handleOpenAddTask}
-          onToggleStatus={toggleTaskStatus}
-          onEditTask={handleOpenEditTask}
-          onDeleteTask={deleteTask}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            user?.hasOnboarded ? (
+              <Navigate to="/home" replace />
+            ) : (
+              <OnboardingScreen onGetStarted={handleGetStarted} />
+            )
+          }
         />
-      )}
-
-      {currentScreen === 'search' && (
-        <SearchScreen
-          tasks={tasks}
-          onBack={() => setCurrentScreen('home')}
-          onToggleStatus={toggleTaskStatus}
-          onEdit={handleOpenEditTask}
-          onDelete={deleteTask}
+        <Route
+          path="/onboarding"
+          element={<OnboardingScreen onGetStarted={handleGetStarted} />}
         />
-      )}
-
-      {currentScreen === 'notifications' && (
-        <NotificationScreen tasks={tasks} onBack={() => setCurrentScreen('home')} />
-      )}
-
-      {currentScreen === 'settings' && (
-        <SettingsScreen
-          onBack={() => setCurrentScreen('home')}
-          onRefreshData={refreshTasks}
+        <Route
+          path="/home"
+          element={
+            <HomeScreen
+              tasks={displayedTasks}
+              weeklyStats={weeklyStats}
+              selectedDate={selectedDate}
+              showAllTasks={showAllTasks}
+              onSelectDate={setSelectedDate}
+              onToggleShowAll={() => setShowAllTasks(!showAllTasks)}
+              onSearchClick={() => navigate('/search')}
+              onNotificationClick={() => navigate('/notifications')}
+              onSettingsClick={() => navigate('/settings')}
+              onAddTaskClick={handleOpenAddTask}
+              onToggleStatus={toggleTaskStatus}
+              onEditTask={handleOpenEditTask}
+              onDeleteTask={deleteTask}
+            />
+          }
         />
-      )}
+        <Route
+          path="/search"
+          element={
+            <SearchScreen
+              tasks={tasks}
+              onBack={() => navigate('/home')}
+              onToggleStatus={toggleTaskStatus}
+              onEdit={handleOpenEditTask}
+              onDelete={deleteTask}
+            />
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <NotificationScreen
+              tasks={tasks}
+              onBack={() => navigate('/home')}
+            />
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <SettingsScreen
+              onBack={() => navigate('/home')}
+              onRefreshData={refreshTasks}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to="/home" replace />} />
+      </Routes>
 
       {/* Task Modal for Add and Edit */}
       <TaskModal
