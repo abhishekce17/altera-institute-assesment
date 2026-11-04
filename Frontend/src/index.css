@@ -53,3 +53,16 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Date strip item: exactly 1/7th of container width to preserve 7-day grid spacing */
+.date-strip-item {
+  flex: 0 0 calc((100% - 24px) / 7);
+  width: calc((100% - 24px) / 7);
+}
+
+@media (min-width: 640px) {
+  .date-strip-item {
+    flex: 0 0 calc((100% - 48px) / 7);
+    width: calc((100% - 48px) / 7);
+  }
+}

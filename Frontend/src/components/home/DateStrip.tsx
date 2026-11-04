@@ -1,9 +1,8 @@
-import React, { useRef, useEffect, useLayoutEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import React, { useRef, useLayoutEffect, useMemo } from 'react';
 import type { DayItem } from '../../types/task';
 import { useAppStore } from '../../store/useAppStore';
 import { useTasks } from '../../hooks/useTasks';
-import { getScrollableDays, getTodayISO } from '../../utils/date';
+import { getScrollableDays, getMondayOfDate } from '../../utils/date';
 
 interface DateStripProps {
   days?: DayItem[];
@@ -15,12 +14,11 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
   const setSelectedDate = useAppStore((state) => state.setSelectedDate);
   const { tasks } = useTasks();
 
-  const today = getTodayISO();
   const handleSelectDate = onSelectDate || setSelectedDate;
 
-  // Generate 60 days in past and 60 days in future from today for bi-directional scroll
+  // Generate 8 weeks past and 8 weeks future, aligned to full Monday-to-Sunday weeks
   const activeDays = useMemo(() => {
-    return days || getScrollableDays(selectedDate, 60, 60);
+    return days || getScrollableDays(selectedDate, 8, 8);
   }, [days, selectedDate]);
 
   // Set of dates that have tasks added
@@ -36,119 +34,82 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
     return set;
   }, [tasks]);
 
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const selectedButtonRef = useRef<HTMLButtonElement | null>(null);
-  const isUserActionRef = useRef(false);
+  const activeMondayStr = useMemo(() => getMondayOfDate(selectedDate), [selectedDate]);
 
-  // Instant scroll on initial layout before paint - zero visible sliding/rotation on refresh
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const mondayButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // Mouse drag-to-scroll refs
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const hasDraggedRef = useRef(false);
+
+  // Instant scroll on initial layout before paint — perfectly aligns the 7-day week with zero visible sliding
   useLayoutEffect(() => {
-    if (selectedButtonRef.current && scrollRef.current) {
-      const container = scrollRef.current;
-      const button = selectedButtonRef.current;
-      const containerRect = container.getBoundingClientRect();
-      const buttonRect = button.getBoundingClientRect();
-      const targetScrollLeft =
-        container.scrollLeft +
-        (buttonRect.left - containerRect.left) -
-        containerRect.width / 2 +
-        buttonRect.width / 2;
-      container.scrollLeft = targetScrollLeft;
+    if (mondayButtonRef.current && scrollRef.current) {
+      scrollRef.current.scrollLeft = mondayButtonRef.current.offsetLeft;
     }
   }, []);
 
-  // Smooth scroll ONLY on direct user click/interaction
-  useEffect(() => {
-    if (isUserActionRef.current && selectedButtonRef.current) {
-      selectedButtonRef.current.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest',
-      });
-      isUserActionRef.current = false;
-    }
-  }, [selectedDate]);
-
-  const handleScrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -260, behavior: 'smooth' });
-    }
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0 || !scrollRef.current) return;
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    startXRef.current = e.pageX - scrollRef.current.offsetLeft;
+    scrollLeftRef.current = scrollRef.current.scrollLeft;
   };
 
-  const handleScrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 260, behavior: 'smooth' });
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current || !scrollRef.current) return;
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = x - startXRef.current;
+    if (Math.abs(walk) > 4) {
+      hasDraggedRef.current = true;
     }
+    scrollRef.current.scrollLeft = scrollLeftRef.current - walk;
   };
 
-  const handleJumpToToday = () => {
-    isUserActionRef.current = true;
-    handleSelectDate(today);
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
   };
 
-  const handleDayClick = (dateString: string) => {
-    isUserActionRef.current = true;
-    handleSelectDate(dateString);
+  const handleWheel = (e: React.WheelEvent) => {
+    if (scrollRef.current && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      scrollRef.current.scrollLeft += e.deltaY;
+    }
   };
 
   return (
-    <div className="w-full py-1">
-      {/* Top Strip Navigation Controls */}
-      <div className="flex items-center justify-between px-1 mb-2">
-        <div className="flex items-center gap-1.5">
-          {selectedDate !== today && (
-            <button
-              type="button"
-              onClick={handleJumpToToday}
-              className="px-2 py-0.5 text-[10px] font-bold bg-blue-50 text-[#3866F2] hover:bg-blue-100 transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              <Calendar className="w-2.5 h-2.5" />
-              <span>Today</span>
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1 ml-auto">
-          <button
-            type="button"
-            onClick={handleScrollLeft}
-            aria-label="Scroll to previous days"
-            className="w-7 h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={handleScrollRight}
-            aria-label="Scroll to next days"
-            className="w-7 h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Horizontally scrollable date strip */}
+    <div className="px-4 md:px-0 py-2">
       <div
         ref={scrollRef}
         tabIndex={0}
         aria-label="Scrollable calendar strip"
-        className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 px-1 touch-pan-x"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
+        className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-1 touch-pan-x w-full select-none cursor-grab active:cursor-grabbing"
       >
         {activeDays.map((day) => {
           const isSelected = day.isSelected;
           const hasTasks = datesWithTasks.has(day.dateString);
+          const isMondayOfSelectedWeek = day.dateString === activeMondayStr;
 
           return (
             <button
               key={day.dateString}
-              ref={isSelected ? selectedButtonRef : undefined}
+              ref={isMondayOfSelectedWeek ? mondayButtonRef : undefined}
               type="button"
-              onClick={() => handleDayClick(day.dateString)}
-              className={`shrink-0 w-[52px] h-[68px] flex flex-col items-center justify-center cursor-pointer transition-colors border-2 ${
+              onClick={() => {
+                if (hasDraggedRef.current) return;
+                handleSelectDate(day.dateString);
+              }}
+              className={`date-strip-item shrink-0 h-[68px] flex flex-col items-center justify-center cursor-pointer transition-colors border-2 ${
                 isSelected
-                  ? day.isToday
-                    ? 'bg-[#3866F2] text-white border-white ring-2 ring-[#3866F2]'
-                    : 'bg-[#3866F2] text-white border-[#3866F2]'
+                  ? 'bg-[#3866F2] text-white border-[#3866F2]'
                   : day.isToday
                   ? 'border-[#3866F2] bg-white text-slate-900 font-bold hover:bg-blue-50/40'
                   : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-200/80'
@@ -156,7 +117,7 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
             >
               {/* Day abbreviation (Mon, Tue, etc.) */}
               <span
-                className={`text-[11px] font-semibold leading-none mb-1.5 ${
+                className={`text-[11px] md:text-xs font-semibold leading-none mb-1.5 ${
                   isSelected ? 'text-blue-100' : day.isToday ? 'text-[#3866F2]' : 'text-slate-400'
                 }`}
               >

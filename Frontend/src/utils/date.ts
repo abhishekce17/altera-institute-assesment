@@ -53,24 +53,31 @@ export function getWeekDays(referenceDateStr: string, selectedDateStr: string): 
 }
 
 /**
- * Generates an array of DayItem spanning from `pastDays` before today to `futureDays` after today.
- * Allows smooth horizontal scrolling in both past and future directions from the current date.
+ * Generates an array of DayItem spanning `pastWeeks` before the current week
+ * to `futureWeeks` after the current week. Every week starts on Monday and ends on Sunday,
+ * maintaining the exact 7-day weekly schedule spacing.
  */
 export function getScrollableDays(
   selectedDateStr: string,
-  pastDays = 60,
-  futureDays = 60
+  pastWeeks = 8,
+  futureWeeks = 8
 ): DayItem[] {
   const todayStr = getTodayISO();
-  const [tYear, tMonth, tDay] = todayStr.split('-').map(Number);
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const currentMondayStr = getMondayOfDate(todayStr);
+  const [year, month, day] = currentMondayStr.split('-').map(Number);
+
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days: DayItem[] = [];
 
-  for (let i = -pastDays; i <= futureDays; i++) {
-    const d = new Date(tYear, tMonth - 1, tDay + i);
-    const isoString = formatDateToISO(d);
-    const dateNum = String(d.getDate()).padStart(2, '0');
-    const dayName = dayNames[d.getDay()];
+  const totalDays = (pastWeeks + 1 + futureWeeks) * 7;
+  const startOffset = -pastWeeks * 7;
+
+  for (let i = 0; i < totalDays; i++) {
+    const offset = startOffset + i;
+    const d = new Date(Date.UTC(year, month - 1, day + offset));
+    const isoString = d.toISOString().split('T')[0];
+    const dateNum = String(d.getUTCDate()).padStart(2, '0');
+    const dayName = dayNames[i % 7];
 
     days.push({
       dateString: isoString,
