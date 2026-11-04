@@ -15,9 +15,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ percentage }) => {
       </div>
 
       {/* Progress track */}
-      <div className="w-full h-3 md:h-3.5 bg-[#EBF2FE] rounded-full overflow-hidden p-0.5">
+      <div className="w-full h-3 md:h-3.5 bg-[#EBF2FE] overflow-hidden p-0.5">
         <div
-          className="h-full bg-[#2B52D4] rounded-full transition-all duration-500 ease-out"
+          className="h-full bg-[#2B52D4] transition-all duration-500 ease-out"
           style={{ width: `${safePercentage}%` }}
         />
       </div>

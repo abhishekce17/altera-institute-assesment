@@ -85,7 +85,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
       />
 
       {/* Modal / Bottom Sheet Content: Bottom sheet on mobile, centered dialog on desktop */}
-      <div className="relative w-full sm:max-w-lg md:max-w-xl bg-white rounded-t-[32px] sm:rounded-3xl border border-slate-200/80 p-6 md:p-8 z-10 max-h-[92vh] overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-8 duration-200">
+      <div className="relative w-full sm:max-w-lg md:max-w-xl bg-white border border-slate-200/80 p-6 md:p-8 z-10 max-h-[92vh] overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-8 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
@@ -95,7 +95,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -103,7 +103,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
 
         {/* Error notification banner */}
         {error && (
-          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-600">
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 flex items-center gap-2 text-xs text-red-600">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -125,7 +125,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                 if (error) setError(null);
               }}
               placeholder="Doing Homework"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all"
             />
           </div>
 
@@ -143,7 +143,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                   onChange={(e) => setStartTime(e.target.value)}
                   placeholder="09:00 AM"
                   aria-label="Start Time"
-                  className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all font-medium"
+                  className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all font-medium"
                 />
               </div>
 
@@ -157,7 +157,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                   onChange={(e) => setEndTime(e.target.value)}
                   placeholder="10:30 AM"
                   aria-label="End Time"
-                  className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all font-medium"
+                  className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all font-medium"
                 />
               </div>
             </div>
@@ -177,7 +177,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all font-medium cursor-pointer"
+                className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all font-medium cursor-pointer"
               />
             </div>
             {date && (
@@ -198,7 +198,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                     key={opt}
                     type="button"
                     onClick={() => setPriority(opt)}
-                    className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center ${
+                    className={`py-2 px-3 text-xs font-bold border transition-all cursor-pointer text-center ${
                       isSelected
                         ? opt === 'High'
                           ? 'bg-red-500 text-white border-red-500'
@@ -226,7 +226,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add Description"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
             />
           </div>
 
@@ -234,7 +234,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-sm rounded-2xl transition-all cursor-pointer flex items-center justify-center"
+              className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-sm transition-all cursor-pointer flex items-center justify-center"
             >
               {isEditing ? 'Save changes' : 'Create task'}
             </button>

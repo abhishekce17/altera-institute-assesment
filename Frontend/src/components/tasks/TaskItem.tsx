@@ -69,9 +69,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl my-2 select-none group">
+    <div className="relative overflow-hidden my-2 select-none group">
       {/* Background Revealed Delete Trigger */}
-      <div className="absolute inset-y-0 right-0 w-20 bg-red-500 rounded-2xl flex items-center justify-center text-white font-medium text-xs">
+      <div className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center text-white font-medium text-xs">
         <button
           type="button"
           onClick={() => {
@@ -94,7 +94,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           transform: `translateX(-${swipeOffset}px)`,
           transition: isSwiping ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
         }}
-        className="relative bg-white border border-slate-100/90 rounded-2xl p-3.5 md:p-4 flex items-center justify-between gap-3 hover:border-slate-300/80 transition-all z-10"
+        className="relative bg-white border border-slate-100/90 p-3.5 md:p-4 flex items-center justify-between gap-3 hover:border-slate-300/80 transition-all z-10"
       >
         {/* Left: Checkbox & Task Information */}
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
@@ -103,7 +103,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             type="button"
             onClick={() => onToggleStatus(task._id)}
             aria-label={isCompleted ? 'Mark task as pending' : 'Mark task as completed'}
-            className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+            className={`w-6 h-6 flex items-center justify-center transition-all cursor-pointer shrink-0 ${
               isCompleted
                 ? 'bg-[#3866F2] text-white'
                 : 'border-2 border-slate-300 hover:border-[#3866F2] bg-white'
@@ -130,7 +130,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               </span>
               {task.priority && (
                 <span
-                  className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md ${
+                  className={`text-[10px] font-bold px-1.5 py-0.2 ${
                     priorityStyles[task.priority] || priorityStyles.Medium
                   }`}
                 >
@@ -147,7 +147,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             type="button"
             onClick={() => onEdit(task)}
             aria-label="Edit task"
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
           >
             <Edit3 className="w-4 h-4" />
           </button>
@@ -155,7 +155,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             type="button"
             onClick={() => onDelete(task._id)}
             aria-label="Delete task"
-            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
           </button>

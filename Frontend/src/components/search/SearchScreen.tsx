@@ -40,7 +40,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
             type="button"
             onClick={onBack}
             aria-label="Back to home"
-            className="p-2 -ml-2 text-slate-700 hover:text-slate-900 rounded-full hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="p-2 -ml-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1.5"
           >
             <ArrowLeft className="w-5 h-5 stroke-[2]" />
             <span className="hidden md:inline text-xs font-semibold text-slate-600">Back to Dashboard</span>
@@ -56,7 +56,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
             autoFocus
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type task title or keyword (e.g., Wireframe, Meeting, Homework)..."
-            className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+            className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200/90 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all"
           />
           {query ? (
             <button
@@ -84,7 +84,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
         {/* Results List */}
         <div className="flex-1 overflow-y-auto no-scrollbar space-y-2">
           {filteredTasks.length === 0 ? (
-            <div className="py-20 text-center text-slate-400 bg-slate-50/60 rounded-3xl border border-dashed border-slate-200">
+            <div className="py-20 text-center text-slate-400 bg-slate-50/60 border border-dashed border-slate-200">
               <Search className="w-10 h-10 mx-auto text-slate-300 mb-2 stroke-[1.5]" />
               <p className="text-sm font-semibold text-slate-700">No matching tasks found</p>
               <p className="text-xs text-slate-400 mt-1">

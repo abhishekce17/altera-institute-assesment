@@ -53,7 +53,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           {/* Left Column: Weekly Schedule & Stats Cards (5 cols) */}
           <div className="lg:col-span-5 space-y-6">
             {/* Calendar Card */}
-            <div className="bg-slate-50/70 border border-slate-100 rounded-3xl p-5">
+            <div className="bg-slate-50/70 border border-slate-100 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Calendar className="w-4 h-4 text-[#3866F2]" />
                 <h2 className="text-sm font-bold text-slate-800">Weekly Schedule</h2>
@@ -62,7 +62,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
 
             {/* Weekly Overview Card */}
-            <div className="bg-slate-50/70 border border-slate-100 rounded-3xl p-5 space-y-4">
+            <div className="bg-slate-50/70 border border-slate-100 p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-[#3866F2]" />
@@ -87,7 +87,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <h2 className="text-lg font-bold text-slate-900">
                   {showAllTasks ? 'This Week’s Tasks' : 'Tasks Today'}
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-[#3866F2]">
+                <span className="px-2 py-0.5 text-xs font-semibold bg-blue-50 text-[#3866F2]">
                   {tasks.length}
                 </span>
               </div>

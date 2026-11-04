@@ -24,7 +24,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
       <div className="flex-1 flex flex-col justify-between px-7 md:px-12 pt-4 md:py-16 pb-8 bg-white">
         <div className="space-y-6 pt-2 md:pt-8 max-w-md">
           {/* Desktop App Badge */}
-          <div className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[#3866F2] text-xs font-semibold">
+          <div className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 text-[#3866F2] text-xs font-semibold">
             <Sparkles className="w-4 h-4" />
             <span>Task Manager & Weekly Planner</span>
           </div>
@@ -41,7 +41,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
           {/* Desktop Feature Highlights */}
           <div className="hidden md:grid grid-cols-1 gap-4 pt-2">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#3866F2] flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 bg-blue-50 text-[#3866F2] flex items-center justify-center shrink-0">
                 <Calendar className="w-4 h-4" />
               </div>
               <div>
@@ -51,7 +51,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                 <TrendingUp className="w-4 h-4" />
               </div>
               <div>
@@ -61,7 +61,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
                 <CheckSquare className="w-4 h-4" />
               </div>
               <div>
@@ -77,7 +77,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
           <button
             type="button"
             onClick={onGetStarted}
-            className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-base rounded-2xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-base transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
           >
             Get Started
           </button>

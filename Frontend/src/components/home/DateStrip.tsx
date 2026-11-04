@@ -17,7 +17,7 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
               key={day.dateString}
               type="button"
               onClick={() => onSelectDate(day.dateString)}
-              className={`flex-1 min-w-[42px] max-w-[48px] md:max-w-none py-2.5 md:py-3 px-1 md:px-2 rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+              className={`flex-1 min-w-[42px] max-w-[48px] md:max-w-none py-2.5 md:py-3 px-1 md:px-2 flex flex-col items-center justify-center transition-all cursor-pointer ${
                 isSelected
                   ? 'bg-[#3866F2] text-white scale-[1.03]'
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-200/60'
@@ -44,9 +44,9 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
               {/* Active selection dot indicator */}
               <div className="h-1.5 mt-1.5 flex items-center justify-center">
                 {isSelected ? (
-                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  <span className="w-1.5 h-1.5 bg-white" />
                 ) : (
-                  <span className="w-1.5 h-1.5 rounded-full bg-transparent" />
+                  <span className="w-1.5 h-1.5 bg-transparent" />
                 )}
               </div>
             </button>

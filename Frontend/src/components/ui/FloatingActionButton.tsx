@@ -16,7 +16,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         type="button"
         onClick={onClick}
         aria-label={ariaLabel}
-        className="pointer-events-auto w-14 h-14 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-90 text-white rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer group"
+        className="pointer-events-auto w-14 h-14 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-90 text-white flex items-center justify-center transition-all duration-200 cursor-pointer group"
       >
         <Plus className="w-7 h-7 stroke-[2.5] transition-transform duration-200 group-hover:rotate-90" />
       </button>

@@ -22,8 +22,8 @@ export const TaskList: React.FC<TaskListProps> = ({
 }) => {
   if (tasks.length === 0) {
     return (
-      <div className="py-12 px-4 rounded-3xl border border-dashed border-slate-200/90 flex flex-col items-center justify-center text-center bg-slate-50/50 my-2">
-        <div className="w-12 h-12 rounded-full bg-blue-50 text-[#3866F2] flex items-center justify-center mb-3">
+      <div className="py-12 px-4 border border-dashed border-slate-200/90 flex flex-col items-center justify-center text-center bg-slate-50/50 my-2">
+        <div className="w-12 h-12 bg-blue-50 text-[#3866F2] flex items-center justify-center mb-3">
           <CheckCircle2 className="w-6 h-6 stroke-[1.8]" />
         </div>
         <p className="text-sm font-semibold text-slate-700">{emptyMessage}</p>
@@ -34,7 +34,7 @@ export const TaskList: React.FC<TaskListProps> = ({
           <button
             type="button"
             onClick={onAddTask}
-            className="mt-4 px-4 py-2 bg-[#3866F2] hover:bg-[#2B52D4] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
+            className="mt-4 px-4 py-2 bg-[#3866F2] hover:bg-[#2B52D4] text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             Add Task
