@@ -1,6 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, CheckCircle2, Clock, Trash2, CalendarCheck } from 'lucide-react';
+import {
+  ArrowLeft,
+  Bell,
+  CheckCircle2,
+  Clock,
+  Trash2,
+  CalendarCheck,
+  CheckCheck,
+} from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { NotificationListSkeleton } from '../ui/Skeleton';
 
@@ -11,13 +19,30 @@ interface NotificationScreenProps {
 export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
   const navigate = useNavigate();
   const handleBack = onBack || (() => navigate('/home'));
-  const { notifications, isLoading, clearAll, isClearing } = useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    clearAll,
+    isClearing,
+    markAsRead,
+    markAllAsRead,
+    isMarkingAllRead,
+  } = useNotifications();
 
   const handleClearAll = async () => {
     try {
       await clearAll();
     } catch (err) {
       console.error('[Notifications] Clear failed:', err);
+    }
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await markAsRead(id);
+    } catch (err) {
+      console.error('[Notifications] Mark read failed:', err);
     }
   };
 
@@ -33,7 +58,7 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
 
   return (
     <div className="flex-1 flex flex-col bg-white min-h-screen md:min-h-[850px] p-5 md:p-8">
-      <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col">
+      <div className="w-full max-w-3xl mx-auto flex-1 flex-col flex">
         {/* Top Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
           <div className="flex items-center gap-3">
@@ -46,20 +71,40 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
               <ArrowLeft className="w-5 h-5 stroke-[2]" />
               <span className="hidden md:inline text-xs font-semibold text-slate-600">Back to Dashboard</span>
             </button>
-            <h1 className="text-lg font-bold text-slate-900">Notifications</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold text-slate-900">Notifications</h1>
+              {unreadCount > 0 && (
+                <span className="px-1.5 py-0.5 bg-blue-100 text-[#3866F2] text-[10px] font-bold">
+                  {unreadCount} new
+                </span>
+              )}
+            </div>
           </div>
 
-          {notifications.length > 0 && (
-            <button
-              type="button"
-              onClick={handleClearAll}
-              disabled={isClearing}
-              className="text-xs font-semibold text-slate-500 hover:text-red-600 flex items-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>{isClearing ? 'Clearing...' : 'Clear all'}</span>
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={() => markAllAsRead()}
+                disabled={isMarkingAllRead}
+                className="text-xs font-semibold text-[#3866F2] hover:text-[#2b52d4] flex items-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
+              >
+                <CheckCheck className="w-3.5 h-3.5" />
+                <span>{isMarkingAllRead ? 'Marking...' : 'Mark all as read'}</span>
+              </button>
+            )}
+            {notifications.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAll}
+                disabled={isClearing}
+                className="text-xs font-semibold text-slate-500 hover:text-red-600 flex items-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isClearing ? 'Clearing...' : 'Clear all'}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Notifications List */}
@@ -76,10 +121,24 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
             notifications.map((item) => (
               <div
                 key={item._id}
-                className={`p-4 border transition-colors flex items-start gap-3.5 ${
+                role={!item.isRead ? 'button' : undefined}
+                tabIndex={!item.isRead ? 0 : undefined}
+                onClick={() => {
+                  if (!item.isRead) {
+                    handleMarkAsRead(item._id);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && !item.isRead) {
+                    e.preventDefault();
+                    handleMarkAsRead(item._id);
+                  }
+                }}
+                title={!item.isRead ? 'Click to mark as read' : undefined}
+                className={`p-4 border transition-all flex items-start gap-3.5 ${
                   item.isRead
-                    ? 'bg-white border-slate-100'
-                    : 'bg-blue-50/40 border-blue-100'
+                    ? 'bg-white border-slate-100 cursor-default'
+                    : 'bg-blue-50/40 border-blue-100 hover:bg-blue-50/70 hover:border-blue-200 cursor-pointer'
                 }`}
               >
                 <div
@@ -102,12 +161,27 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-xs font-bold text-slate-900 truncate">
-                      {item.title}
-                    </h3>
-                    <span className="text-[10px] text-slate-400 shrink-0">
-                      {formatNotificationTime(item.createdAt)}
-                    </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h3 className="text-xs font-bold text-slate-900 truncate">
+                        {item.title}
+                      </h3>
+                      {!item.isRead && (
+                        <span
+                          className="notification-badge w-2 h-2 bg-[#3866F2] shrink-0"
+                          title="Unread"
+                        />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] text-slate-400">
+                        {formatNotificationTime(item.createdAt)}
+                      </span>
+                      {!item.isRead && (
+                        <span className="text-[10px] font-semibold text-[#3866F2] hover:underline hidden sm:inline">
+                          Mark as read
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
                     {item.message}

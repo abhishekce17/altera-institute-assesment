@@ -32,15 +32,58 @@ export function useNotifications() {
 
   const clearAllMutation = useMutation({
     mutationFn: () => api.clearNotifications(),
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      const previous = queryClient.getQueryData<NotificationItem[]>(['notifications']);
       queryClient.setQueryData(['notifications'], []);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['notifications'], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => api.markNotificationRead(id),
-    onSuccess: () => {
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      const previous = queryClient.getQueryData<NotificationItem[]>(['notifications']);
+      queryClient.setQueryData<NotificationItem[]>(['notifications'], (prev = []) =>
+        prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
+      );
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['notifications'], context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => api.markAllNotificationsRead(),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      const previous = queryClient.getQueryData<NotificationItem[]>(['notifications']);
+      queryClient.setQueryData<NotificationItem[]>(['notifications'], (prev = []) =>
+        prev.map((n) => ({ ...n, isRead: true }))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['notifications'], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
@@ -53,6 +96,9 @@ export function useNotifications() {
     clearAll: clearAllMutation.mutateAsync,
     isClearing: clearAllMutation.isPending,
     markAsRead: markAsReadMutation.mutateAsync,
+    isMarkingRead: markAsReadMutation.isPending,
+    markAllAsRead: markAllAsReadMutation.mutateAsync,
+    isMarkingAllRead: markAllAsReadMutation.isPending,
     refetch: query.refetch,
   };
 }

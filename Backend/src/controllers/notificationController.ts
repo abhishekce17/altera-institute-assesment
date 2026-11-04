@@ -50,6 +50,29 @@ export async function clearNotifications(req: Request, res: Response, next: Next
 }
 
 /**
+ * PATCH /api/notifications/read-all
+ * Mark all notifications as read for the authenticated user.
+ */
+export async function markAllNotificationsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const user = (req as AuthRequest).user;
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
+
+    await Notification.updateMany({ userId: user._id, isRead: false }, { isRead: true });
+
+    res.status(200).json({
+      success: true,
+      message: 'All notifications marked as read',
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
  * PATCH /api/notifications/:id/read
  * Mark a single notification as read.
  */

@@ -222,6 +222,13 @@ class ApiService {
   async markNotificationRead(id: string): Promise<void> {
     await apiClient.patch(`/notifications/${id}/read`);
   }
+
+  /**
+   * Mark all notifications as read in MongoDB Atlas.
+   */
+  async markAllNotificationsRead(): Promise<void> {
+    await apiClient.patch('/notifications/read-all');
+  }
 }
 
 export const api = new ApiService();
