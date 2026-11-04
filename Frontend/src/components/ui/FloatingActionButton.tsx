@@ -11,7 +11,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   ariaLabel = 'Add New Task',
 }) => {
   return (
-    <div className="sticky bottom-6 inset-x-0 flex justify-center pointer-events-none z-30">
+    <div className="sticky bottom-6 inset-x-0 flex justify-center lg:justify-end lg:pr-8 pointer-events-none z-30">
       <button
         type="button"
         onClick={onClick}
@@ -23,4 +23,3 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     </div>
   );
 };
-

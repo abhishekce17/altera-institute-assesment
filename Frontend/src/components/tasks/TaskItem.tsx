@@ -94,7 +94,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           transform: `translateX(-${swipeOffset}px)`,
           transition: isSwiping ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
         }}
-        className="relative bg-white border border-slate-100/80 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-xs hover:border-slate-200 transition-colors z-10"
+        className="relative bg-white border border-slate-100/90 rounded-2xl p-3.5 md:p-4 flex items-center justify-between gap-3 shadow-xs hover:border-slate-300/80 hover:shadow-sm transition-all z-10"
       >
         {/* Left: Checkbox & Task Information */}
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
