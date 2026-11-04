@@ -191,32 +191,7 @@ export async function seedInvigilatorData(req: Request, res: Response, next: Nex
       }))
     );
 
-    // 5. Insert sample notifications
-    await Notification.insertMany([
-      {
-        userId,
-        title: 'Welcome to Task Manager!',
-        message: 'Your workspace is ready with sample tasks across past, today, and future dates.',
-        type: 'progress',
-        isRead: false,
-      },
-      {
-        userId,
-        title: 'Task Completed',
-        message: 'Morning Daily Standup & Sprint Sync was marked as completed.',
-        type: 'task_completed',
-        isRead: false,
-      },
-      {
-        userId,
-        title: 'Upcoming Task Reminder',
-        message: 'Feature Demonstration & Walkthrough is scheduled for today at 02:00 PM.',
-        type: 'reminder',
-        isRead: true,
-      },
-    ]);
-
-    // 6. Generate JWT auth token for instant login
+    // 5. Generate JWT auth token for instant login
     const token = createToken({
       userId: user._id.toString(),
       email: user.email,
