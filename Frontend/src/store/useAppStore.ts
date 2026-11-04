@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { Task } from '../types/task';
 import type { TaskFormData } from '../components/tasks/TaskModal';
 import { getTodayISO } from '../utils/date';
@@ -36,60 +37,71 @@ interface AppStoreState {
   clearPendingTaskSubmission: () => void;
 }
 
-export const useAppStore = create<AppStoreState>((set) => ({
-  selectedDate: getTodayISO(),
-  showAllTasks: false,
+export const useAppStore = create<AppStoreState>()(
+  persist(
+    (set) => ({
+      selectedDate: getTodayISO(),
+      showAllTasks: false,
 
-  isTaskModalOpen: false,
-  editingTask: null,
-  pendingTaskSubmission: null,
-
-  isAuthModalOpen: false,
-  authModalSubtitle: undefined,
-
-  setSelectedDate: (date: string) => set({ selectedDate: date }),
-  setShowAllTasks: (show: boolean) => set({ showAllTasks: show }),
-  toggleShowAllTasks: () => set((state) => ({ showAllTasks: !state.showAllTasks })),
-
-  openAddTask: () =>
-    set({
-      isTaskModalOpen: true,
-      editingTask: null,
-    }),
-
-  openEditTask: (task: Task) =>
-    set({
-      isTaskModalOpen: true,
-      editingTask: task,
-    }),
-
-  closeTaskModal: () =>
-    set({
       isTaskModalOpen: false,
       editingTask: null,
       pendingTaskSubmission: null,
-    }),
 
-  openAuthModal: (subtitle?: string) =>
-    set({
-      isAuthModalOpen: true,
-      authModalSubtitle: subtitle,
-    }),
-
-  closeAuthModal: () =>
-    set({
       isAuthModalOpen: false,
       authModalSubtitle: undefined,
-    }),
 
-  setPendingTaskSubmission: (submission) =>
-    set({
-      pendingTaskSubmission: submission,
-    }),
+      setSelectedDate: (date: string) => set({ selectedDate: date }),
+      setShowAllTasks: (show: boolean) => set({ showAllTasks: show }),
+      toggleShowAllTasks: () => set((state) => ({ showAllTasks: !state.showAllTasks })),
 
-  clearPendingTaskSubmission: () =>
-    set({
-      pendingTaskSubmission: null,
+      openAddTask: () =>
+        set({
+          isTaskModalOpen: true,
+          editingTask: null,
+        }),
+
+      openEditTask: (task: Task) =>
+        set({
+          isTaskModalOpen: true,
+          editingTask: task,
+        }),
+
+      closeTaskModal: () =>
+        set({
+          isTaskModalOpen: false,
+          editingTask: null,
+          pendingTaskSubmission: null,
+        }),
+
+      openAuthModal: (subtitle?: string) =>
+        set({
+          isAuthModalOpen: true,
+          authModalSubtitle: subtitle,
+        }),
+
+      closeAuthModal: () =>
+        set({
+          isAuthModalOpen: false,
+          authModalSubtitle: undefined,
+        }),
+
+      setPendingTaskSubmission: (submission) =>
+        set({
+          pendingTaskSubmission: submission,
+        }),
+
+      clearPendingTaskSubmission: () =>
+        set({
+          pendingTaskSubmission: null,
+        }),
     }),
-}));
+    {
+      name: 'todo_app_state',
+      partialize: (state) => ({
+        selectedDate: state.selectedDate,
+        showAllTasks: state.showAllTasks,
+      }),
+    }
+  )
+);
 

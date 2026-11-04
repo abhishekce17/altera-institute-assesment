@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import React, { useRef, useEffect, useLayoutEffect, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import type { DayItem } from '../../types/task';
 import { useAppStore } from '../../store/useAppStore';
 import { useTasks } from '../../hooks/useTasks';
@@ -38,17 +38,33 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const selectedButtonRef = useRef<HTMLButtonElement | null>(null);
-  const isInitialMount = useRef(true);
+  const isUserActionRef = useRef(false);
 
-  // Auto-scroll selected date into view smoothly
+  // Instant scroll on initial layout before paint - zero visible sliding/rotation on refresh
+  useLayoutEffect(() => {
+    if (selectedButtonRef.current && scrollRef.current) {
+      const container = scrollRef.current;
+      const button = selectedButtonRef.current;
+      const containerRect = container.getBoundingClientRect();
+      const buttonRect = button.getBoundingClientRect();
+      const targetScrollLeft =
+        container.scrollLeft +
+        (buttonRect.left - containerRect.left) -
+        containerRect.width / 2 +
+        buttonRect.width / 2;
+      container.scrollLeft = targetScrollLeft;
+    }
+  }, []);
+
+  // Smooth scroll ONLY on direct user click/interaction
   useEffect(() => {
-    if (selectedButtonRef.current) {
+    if (isUserActionRef.current && selectedButtonRef.current) {
       selectedButtonRef.current.scrollIntoView({
-        behavior: isInitialMount.current ? 'auto' : 'smooth',
+        behavior: 'smooth',
         inline: 'center',
         block: 'nearest',
       });
-      isInitialMount.current = false;
+      isUserActionRef.current = false;
     }
   }, [selectedDate]);
 
@@ -65,7 +81,13 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
   };
 
   const handleJumpToToday = () => {
+    isUserActionRef.current = true;
     handleSelectDate(today);
+  };
+
+  const handleDayClick = (dateString: string) => {
+    isUserActionRef.current = true;
+    handleSelectDate(dateString);
   };
 
   return (
@@ -79,7 +101,7 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
               onClick={handleJumpToToday}
               className="px-2 py-0.5 text-[10px] font-bold bg-blue-50 text-[#3866F2] hover:bg-blue-100 transition-colors flex items-center gap-1 cursor-pointer"
             >
-              <RotateCcw className="w-2.5 h-2.5" />
+              <Calendar className="w-2.5 h-2.5" />
               <span>Today</span>
             </button>
           )}
@@ -110,7 +132,7 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
         ref={scrollRef}
         tabIndex={0}
         aria-label="Scrollable calendar strip"
-        className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 px-1 touch-pan-x"
+        className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 px-1 touch-pan-x"
       >
         {activeDays.map((day) => {
           const isSelected = day.isSelected;
@@ -121,7 +143,7 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
               key={day.dateString}
               ref={isSelected ? selectedButtonRef : undefined}
               type="button"
-              onClick={() => handleSelectDate(day.dateString)}
+              onClick={() => handleDayClick(day.dateString)}
               className={`shrink-0 w-[52px] h-[68px] flex flex-col items-center justify-center cursor-pointer transition-colors border-2 ${
                 isSelected
                   ? day.isToday
