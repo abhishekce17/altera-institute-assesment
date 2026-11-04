@@ -104,7 +104,7 @@ SDE-Assignement/
 ## 🚀 Quickstart Guide (Local Development)
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) v18+ (tested on Node v22)
+- [Node.js](https://nodejs.org/) v18+ (tested on Node v20/v22)
 - [MongoDB](https://www.mongodb.com/) (local daemon or free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster)
 
 ### 1. Clone the Repository
@@ -113,33 +113,146 @@ git clone <your-repository-url>
 cd SDE-Assignement
 ```
 
-### 2. Backend Setup
+### 2. Backend Setup & Environment
 ```bash
 cd Backend
 npm install
 
-# Configure environment variables
+# 1. Create environment file from template
 cp .env.example .env
-# Edit .env if using MongoDB Atlas or custom port (default: mongodb://localhost:27017/todo-app)
 
-# (Optional) Seed realistic sample tasks across the current week
+# 2. (Optional) Adjust .env if using a custom MongoDB connection
+# Default connects to MongoDB Atlas or local mongodb://localhost:27017/todo-app
+
+# 3. Populate test user & realistic tasks across past, today, and future dates
 npm run seed
 
-# Start development server (with hot reload via tsx)
+# 4. Start development server (with hot reload via tsx)
 npm run dev
 # Server will run on http://localhost:5001
 ```
 
-### 3. Frontend Setup
+### 3. Frontend Setup & Environment
 ```bash
 cd ../Frontend
 npm install
 
-# Start development server
+# 1. Create environment file from template
+cp .env.example .env
+
+# 2. Start development server
 npm run dev
 # Application will run on http://localhost:5173
 ```
 *Note: Vite automatically proxies `/api` requests to `http://localhost:5001`, eliminating CORS issues during development.*
+
+---
+
+## ⚙️ Environment Variables Configuration
+
+Both the `Backend` and `Frontend` directories contain pre-configured `.env.example` templates.
+
+### Backend (`Backend/.env`)
+
+Create `Backend/.env` by copying `Backend/.env.example`:
+```bash
+cp Backend/.env.example Backend/.env
+```
+
+| Variable | Required | Default in `.env.example` | Description |
+|---|---|---|---|
+| `PORT` | Optional | `5001` | The local port the Express server listens on. |
+| `MONGODB_URI` | **Required** | `mongodb+srv://...` | MongoDB connection string (MongoDB Atlas cluster or local URI `mongodb://localhost:27017/todo-app`). |
+| `CLIENT_URL` | **Required** | `http://localhost:5173` | Allowed origin for CORS in development and production. |
+| `NODE_ENV` | Optional | `development` | Environment mode (`development`, `production`, or `test`). |
+
+#### Example `Backend/.env`:
+```env
+PORT=5001
+MONGODB_URI=mongodb+srv://admin-Abhi:<password>@cluster0.esdzida.mongodb.net/todo-app?retryWrites=true&w=majority
+CLIENT_URL=http://localhost:5173
+NODE_ENV=development
+```
+
+---
+
+### Frontend (`Frontend/.env`)
+
+Create `Frontend/.env` by copying `Frontend/.env.example`:
+```bash
+cp Frontend/.env.example Frontend/.env
+```
+
+| Variable | Required | Default in `.env.example` | Description |
+|---|---|---|---|
+| `VITE_API_BASE_URL` | Optional | `/api` | Base URL prefix for all API requests. In development, Vite proxies `/api` to `http://localhost:5001`. For production deployments (e.g. Netlify), set this to your cloud backend URL (e.g., `https://your-api.onrender.com/api`). |
+
+#### Example `Frontend/.env`:
+```env
+VITE_API_BASE_URL=/api
+```
+
+---
+
+## 🌱 Seed Data & Evaluator Test Credentials
+
+A dedicated seeder is provided for invigilators and evaluators to instantly test the application with a pre-configured account and a rich dataset distributed across **past, today, and future dates**.
+
+### 🔑 Test Account Credentials
+
+| Field | Value | Notes |
+|---|---|---|
+| **Email** | `user@test.com` | Pre-registered test account |
+| **Password** | `User123!` | Minimum 6 characters required by validation |
+| **Name** | `Demo User` | Profile display name |
+
+---
+
+### ⚡ How to Run the Seed Data
+
+You can seed or reset the database at any time using **either** of the following two methods:
+
+#### Method 1: Via CLI Script (Recommended for Setup)
+```bash
+cd Backend
+npm run seed
+```
+
+#### Method 2: Via REST API Endpoint (One-Click in Browser or cURL)
+The backend exposes a direct idempotent seed endpoint that can be triggered via `POST` or `GET`:
+```bash
+# Using cURL
+curl -X POST http://localhost:5001/api/seed
+
+# Or simply open in any web browser:
+http://localhost:5001/api/seed
+```
+*When opened in a browser, the endpoint automatically sets the HTTP-only auth cookie and returns a JSON payload with credentials, token, and summary metrics.*
+
+---
+
+### 📊 Seed Dataset Breakdown (11 Distinct Tasks)
+
+The seed script dynamically calculates dates relative to the **current calendar date** when executed, guaranteeing a valid test state at any time:
+
+| Relative Date | Task Title | Priority | Status | Purpose / Evaluation Check |
+|---|---|---|---|---|
+| **`Today - 5d`** | Review System Architecture & Requirements | `High` | `completed` | Past completed task history |
+| **`Today - 3d`** | Database Indexing & Auth Security Audit | `Medium` | `completed` | Past completed task history |
+| **`Today - 1d`** | Write Comprehensive API Documentation | `Low` | `completed` | Past completed task history |
+| **`Today - 1d`** | Refactor Swipe-To-Delete Component | `Medium` | `pending` | **Past date protection**: demonstrates that past dates are read-only (new tasks cannot be scheduled in the past) |
+| **`Today`** | Morning Daily Standup & Sprint Sync | `Medium` | `completed` | Today's active tasks & completion metrics |
+| **`Today`** | Feature Demonstration & Walkthrough | `High` | `pending` | Interactive checkbox toggle & swipe-to-delete |
+| **`Today`** | Verify Edge Cases & Responsive UI | `Low` | `pending` | Interactive task editing & priority chips |
+| **`Today + 1d`** | Automated E2E & Regression Test Run | `High` | `pending` | Future schedule planning |
+| **`Today + 3d`** | Client Progress Review & Demo | `Medium` | `pending` | Future schedule planning |
+| **`Today + 5d`** | Performance Profiling & Bundle Optimization | `Low` | `pending` | Weekly overview card progress tracking |
+| **`Today + 7d`** | Sprint Retrospective & Next Roadmap Planning | `Medium` | `pending` | Cross-week calendar strip navigation |
+
+#### Key Guarantees:
+- **Idempotent**: Re-running the seed resets `user@test.com`'s tasks back to the clean baseline without duplicating records.
+- **Clean Inbox**: Wipes artificial notifications to keep the notification tray clean and uncluttered.
+- **Auto-Calculated `weekStart`**: Every task is automatically tagged with its Monday-based ISO week boundary for correct weekly metrics calculation.
 
 ---
 
@@ -182,9 +295,22 @@ Test Files  1 passed (1)
 
 Base URL: `http://localhost:5001/api` (or `/api` via Vite dev proxy)
 
+### 1. Seeding & Evaluation
 | Method | Endpoint | Description | Query / Body Parameters | Status |
 |---|---|---|---|---|
-| `GET` | `/health` | Server health check | None | `200 OK` |
+| `POST` / `GET` | `/seed` | Seed test user & 11 multi-date tasks | `{ email?, password?, name? }` (all optional, defaults to `user@test.com`) | `200 OK` |
+
+### 2. Authentication & User Profile
+| Method | Endpoint | Description | Query / Body Parameters | Status |
+|---|---|---|---|---|
+| `POST` | `/auth/register` | Register new user | `{ name, email, password }` | `201 Created` / `400` |
+| `POST` | `/auth/login` | Login user & issue HTTP-only cookie | `{ email, password }` | `200 OK` / `401` |
+| `POST` | `/auth/logout` | Clear auth cookie | None | `200 OK` |
+| `GET` | `/auth/me` | Fetch currently authenticated user | None (reads cookie / Bearer token) | `200 OK` / `401` |
+
+### 3. Task Management
+| Method | Endpoint | Description | Query / Body Parameters | Status |
+|---|---|---|---|---|
 | `GET` | `/tasks` | List tasks | `?date=YYYY-MM-DD&weekStart=YYYY-MM-DD&status=pending\|completed&search=keyword` | `200 OK` |
 | `GET` | `/tasks/stats/weekly` | Weekly metrics summary | `?date=YYYY-MM-DD` or `?weekStart=YYYY-MM-DD` | `200 OK` |
 | `GET` | `/tasks/:id` | Fetch single task | `:id` (MongoDB ObjectId) | `200 OK` / `404` |
@@ -192,6 +318,14 @@ Base URL: `http://localhost:5001/api` (or `/api` via Vite dev proxy)
 | `PUT` | `/tasks/:id` | Update task | `{ title?, description?, date?, startTime?, endTime?, priority? }` | `200 OK` / `400` / `404` |
 | `PATCH` | `/tasks/:id/status` | Toggle or set status | `{ status?: 'pending' \| 'completed' }` | `200 OK` / `400` / `404` |
 | `DELETE` | `/tasks/:id` | Delete task | `:id` (MongoDB ObjectId) | `200 OK` / `404` |
+
+### 4. Notifications & System
+| Method | Endpoint | Description | Query / Body Parameters | Status |
+|---|---|---|---|---|
+| `GET` | `/health` | Server health check & DB status | None | `200 OK` / `503` |
+| `GET` | `/notifications` | List user notifications | None | `200 OK` |
+| `PATCH` | `/notifications/:id/read` | Mark notification as read | `:id` | `200 OK` / `404` |
+| `PATCH` | `/notifications/read-all` | Mark all notifications read | None | `200 OK` |
 
 ### Sample Response: `GET /api/tasks/stats/weekly`
 ```json
