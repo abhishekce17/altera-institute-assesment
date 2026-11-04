@@ -240,3 +240,4 @@ Base URL: `http://localhost:5001/api` (or `/api` via Vite dev proxy)
 
 ## 📄 License
 This project is submitted for the SDE I Assessment. All rights reserved.
+

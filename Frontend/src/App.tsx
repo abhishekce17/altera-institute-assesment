@@ -12,6 +12,11 @@ type Screen = 'onboarding' | 'home' | 'search';
 export function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const screenParam = params.get('screen') as Screen | null;
+      if (screenParam && ['onboarding', 'home', 'search'].includes(screenParam)) {
+        return screenParam;
+      }
       return localStorage.getItem('todo_has_onboarded') === 'true' ? 'home' : 'onboarding';
     }
     return 'onboarding';
@@ -32,8 +37,32 @@ export function App() {
     deleteTask,
   } = useTasks();
 
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('modal') === 'add' || params.get('modal') === 'edit';
+    }
+    return false;
+  });
+  const [editingTask, setEditingTask] = useState<Task | null>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('modal') === 'edit') {
+        return {
+          _id: 'sample-1',
+          title: 'Finishing Wireframe',
+          description: 'High-fidelity wireframes in Figma',
+          date: '2026-11-04',
+          startTime: '09:00 AM',
+          endTime: '10:30 AM',
+          priority: 'High',
+          status: 'pending',
+          weekStart: '2026-11-02',
+        };
+      }
+    }
+    return null;
+  });
 
   const handleGetStarted = () => {
     localStorage.setItem('todo_has_onboarded', 'true');
