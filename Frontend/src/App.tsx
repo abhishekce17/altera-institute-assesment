@@ -1,20 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MobileContainer } from './components/layout/MobileContainer';
 import { OnboardingScreen } from './components/onboarding/OnboardingScreen';
 import { HomeScreen } from './components/home/HomeScreen';
 import { SearchScreen } from './components/search/SearchScreen';
+import { NotificationScreen } from './components/notifications/NotificationScreen';
+import { SettingsScreen } from './components/settings/SettingsScreen';
 import { TaskModal, type TaskFormData } from './components/tasks/TaskModal';
 import { useTasks } from './hooks/useTasks';
 import type { Task } from './types/task';
 
-type Screen = 'onboarding' | 'home' | 'search';
+type Screen = 'onboarding' | 'home' | 'search' | 'notifications' | 'settings';
 
 export function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const screenParam = params.get('screen') as Screen | null;
-      if (screenParam && ['onboarding', 'home', 'search'].includes(screenParam)) {
+      if (screenParam && ['onboarding', 'home', 'search', 'notifications', 'settings'].includes(screenParam)) {
         return screenParam;
       }
       return localStorage.getItem('todo_has_onboarded') === 'true' ? 'home' : 'onboarding';
@@ -34,7 +36,16 @@ export function App() {
     updateTask,
     toggleTaskStatus,
     deleteTask,
+    refreshTasks,
+    resetTasks,
   } = useTasks();
+
+  // Fetch data whenever user arrives at the Home screen
+  useEffect(() => {
+    if (currentScreen === 'home') {
+      refreshTasks();
+    }
+  }, [currentScreen, refreshTasks]);
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -43,6 +54,7 @@ export function App() {
     }
     return false;
   });
+
   const [editingTask, setEditingTask] = useState<Task | null>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -101,6 +113,8 @@ export function App() {
           onSelectDate={setSelectedDate}
           onToggleShowAll={() => setShowAllTasks(!showAllTasks)}
           onSearchClick={() => setCurrentScreen('search')}
+          onNotificationClick={() => setCurrentScreen('notifications')}
+          onSettingsClick={() => setCurrentScreen('settings')}
           onAddTaskClick={handleOpenAddTask}
           onToggleStatus={toggleTaskStatus}
           onEditTask={handleOpenEditTask}
@@ -115,6 +129,18 @@ export function App() {
           onToggleStatus={toggleTaskStatus}
           onEdit={handleOpenEditTask}
           onDelete={deleteTask}
+        />
+      )}
+
+      {currentScreen === 'notifications' && (
+        <NotificationScreen onBack={() => setCurrentScreen('home')} />
+      )}
+
+      {currentScreen === 'settings' && (
+        <SettingsScreen
+          onBack={() => setCurrentScreen('home')}
+          onRefreshData={refreshTasks}
+          onResetData={resetTasks}
         />
       )}
 

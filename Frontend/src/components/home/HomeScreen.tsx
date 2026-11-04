@@ -18,6 +18,8 @@ interface HomeScreenProps {
   onToggleShowAll: () => void;
   onSearchClick: () => void;
   onAddTaskClick: () => void;
+  onNotificationClick?: () => void;
+  onSettingsClick?: () => void;
   onToggleStatus: (id: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
@@ -32,6 +34,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onToggleShowAll,
   onSearchClick,
   onAddTaskClick,
+  onNotificationClick,
+  onSettingsClick,
   onToggleStatus,
   onEditTask,
   onDeleteTask,
@@ -46,6 +50,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <Header
           onSearchClick={onSearchClick}
           onAddTaskClick={onAddTaskClick}
+          onNotificationClick={onNotificationClick}
+          onSettingsClick={onSettingsClick}
         />
 
         {/* Desktop Layout (2-Column Grid on lg+) */}

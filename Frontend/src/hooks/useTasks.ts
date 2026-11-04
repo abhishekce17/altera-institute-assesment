@@ -250,6 +250,56 @@ export function useTasks() {
     }
   };
 
+  // Reset tasks to initial demo state
+  const resetTasks = () => {
+    setTasks([
+      {
+        _id: 'sample-1',
+        title: 'Finishing Wireframe',
+        description: 'High-fidelity wireframes in Figma',
+        date: today,
+        startTime: '09:00 AM',
+        endTime: '10:30 AM',
+        priority: 'High',
+        status: 'pending',
+        weekStart: getMondayOfDate(today),
+      },
+      {
+        _id: 'sample-2',
+        title: 'Meeting with team',
+        description: 'Sprint planning and architecture review',
+        date: today,
+        startTime: '11:00 AM',
+        endTime: '12:00 PM',
+        priority: 'Medium',
+        status: 'pending',
+        weekStart: getMondayOfDate(today),
+      },
+      {
+        _id: 'sample-3',
+        title: 'Buy a cat food',
+        description: 'Salmon pouches from the pet market',
+        date: today,
+        startTime: '01:00 PM',
+        endTime: '01:30 PM',
+        priority: 'Low',
+        status: 'completed',
+        weekStart: getMondayOfDate(today),
+      },
+      {
+        _id: 'sample-4',
+        title: 'Finishing daily commission',
+        description: 'Deliver the client illustrations and exports',
+        date: today,
+        startTime: '02:00 PM',
+        endTime: '04:00 PM',
+        priority: 'High',
+        status: 'completed',
+        weekStart: getMondayOfDate(today),
+      },
+    ]);
+  };
+
   return {
     tasks,
     displayedTasks,
@@ -265,5 +315,6 @@ export function useTasks() {
     toggleTaskStatus,
     deleteTask,
     refreshTasks: loadServerTasks,
+    resetTasks,
   };
 }
