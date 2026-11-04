@@ -17,48 +17,78 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 }) => {
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [isSwiping, setIsSwiping] = useState<boolean>(false);
-  const touchStartXRef = useRef<number>(0);
-  const touchStartYRef = useRef<number>(0);
-  const isHorizontalSwipeRef = useRef<boolean | null>(null);
+  const isDraggingRef = useRef<boolean>(false);
+  const startXRef = useRef<number>(0);
+  const startYRef = useRef<number>(0);
+  const isHorizontalRef = useRef<boolean | null>(null);
 
   const isCompleted = task.status === 'completed';
 
-  // Touch event handlers for mobile swipe-to-delete
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartXRef.current = e.touches[0].clientX;
-    touchStartYRef.current = e.touches[0].clientY;
-    isHorizontalSwipeRef.current = null;
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // Ignore clicks on action buttons (checkbox, edit, delete)
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+
+    startXRef.current = e.clientX;
+    startYRef.current = e.clientY;
+    isHorizontalRef.current = null;
+    isDraggingRef.current = true;
     setIsSwiping(true);
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const deltaX = touchStartXRef.current - e.touches[0].clientX;
-    const deltaY = Math.abs(touchStartYRef.current - e.touches[0].clientY);
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
 
-    // Detect if this is horizontal swipe vs vertical page scroll
-    if (isHorizontalSwipeRef.current === null) {
-      if (Math.abs(deltaX) > 8 || deltaY > 8) {
-        isHorizontalSwipeRef.current = Math.abs(deltaX) > deltaY;
+    const deltaX = startXRef.current - e.clientX;
+    const deltaY = Math.abs(startYRef.current - e.clientY);
+
+    // Determine direction on first significant movement
+    if (isHorizontalRef.current === null) {
+      if (Math.abs(deltaX) > 6 || deltaY > 6) {
+        isHorizontalRef.current = Math.abs(deltaX) > deltaY;
+        if (isHorizontalRef.current && (e.currentTarget as HTMLElement).setPointerCapture) {
+          try {
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          } catch {}
+        }
       }
     }
 
-    if (!isHorizontalSwipeRef.current) return;
+    if (!isHorizontalRef.current) return;
 
-    // Only allow swiping left (deltaX > 0)
+    // Swiping left to reveal / trigger delete
     if (deltaX > 0) {
-      const clamped = Math.min(80, deltaX);
-      setSwipeOffset(clamped);
-    } else {
-      setSwipeOffset(0);
+      setSwipeOffset(Math.min(220, deltaX));
+    } else if (swipeOffset > 0) {
+      // Swiping right to close
+      setSwipeOffset(Math.max(0, 80 + deltaX));
     }
   };
 
-  const handleTouchEnd = () => {
+  const handlePointerEnd = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
     setIsSwiping(false);
-    if (swipeOffset > 40) {
-      setSwipeOffset(76); // Snap open to reveal delete action
+
+    if ((e.currentTarget as HTMLElement).releasePointerCapture) {
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+
+    // Full swipe (> 150px) triggers delete directly
+    if (swipeOffset > 150) {
+      setSwipeOffset(350);
+      setTimeout(() => {
+        onDelete(task._id);
+      }, 150);
+    } else if (swipeOffset > 40) {
+      // Snap open to reveal delete button
+      setSwipeOffset(80);
     } else {
-      setSwipeOffset(0); // Snap closed
+      // Snap closed
+      setSwipeOffset(0);
     }
   };
 
@@ -69,39 +99,48 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   };
 
   return (
-    <div className="relative overflow-hidden my-2 select-none group">
+    <div className="relative overflow-hidden my-2 select-none group touch-pan-y">
       {/* Background Revealed Delete Trigger */}
-      <div className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center text-white font-medium text-xs">
+      <div className="absolute inset-y-0 right-0 w-full bg-red-500 flex items-center justify-end pr-5 text-white font-medium text-xs">
         <button
           type="button"
           onClick={() => {
             setSwipeOffset(0);
             onDelete(task._id);
           }}
-          className="w-full h-full flex flex-col items-center justify-center gap-1 text-white active:bg-red-600 transition-colors cursor-pointer"
+          className="h-full px-5 flex items-center justify-center gap-1.5 text-white hover:bg-red-600 active:bg-red-700 transition-colors cursor-pointer"
         >
           <Trash2 className="w-5 h-5" />
-          <span className="text-[10px] font-bold">Delete</span>
+          <span className="text-xs font-bold">Delete</span>
         </button>
       </div>
 
       {/* Foreground Task Card */}
       <div
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+        onClick={() => {
+          if (swipeOffset > 0 && !isSwiping) {
+            setSwipeOffset(0);
+          }
+        }}
         style={{
           transform: `translateX(-${swipeOffset}px)`,
           transition: isSwiping ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
         }}
-        className="relative bg-white border border-slate-100/90 p-3.5 md:p-4 flex items-center justify-between gap-3 hover:border-slate-300/80 transition-all z-10"
+        className="relative bg-white border border-slate-100/90 p-3.5 md:p-4 flex items-center justify-between gap-3 hover:border-slate-300/80 transition-all z-10 cursor-grab active:cursor-grabbing"
       >
         {/* Left: Checkbox & Task Information */}
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
           {/* Custom Checkbox matching Figma */}
           <button
             type="button"
-            onClick={() => onToggleStatus(task._id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleStatus(task._id);
+            }}
             aria-label={isCompleted ? 'Mark task as pending' : 'Mark task as completed'}
             className={`w-6 h-6 flex items-center justify-center transition-all cursor-pointer shrink-0 ${
               isCompleted
@@ -115,7 +154,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           {/* Task Info */}
           <div className="min-w-0 flex-1">
             <h3
-              onClick={() => onToggleStatus(task._id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (swipeOffset > 0) {
+                  setSwipeOffset(0);
+                } else {
+                  onToggleStatus(task._id);
+                }
+              }}
               className={`text-sm font-semibold tracking-tight truncate cursor-pointer transition-colors ${
                 isCompleted ? 'line-through text-slate-400 font-normal' : 'text-slate-800'
               }`}
@@ -145,7 +191,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         <div className="flex items-center gap-1 shrink-0 text-slate-400">
           <button
             type="button"
-            onClick={() => onEdit(task)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(task);
+            }}
             aria-label="Edit task"
             className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
           >
@@ -153,7 +202,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => onDelete(task._id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(task._id);
+            }}
             aria-label="Delete task"
             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
           >
@@ -164,4 +216,3 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     </div>
   );
 };
-
