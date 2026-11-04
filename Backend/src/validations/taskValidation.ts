@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isValidDateString, timeToMinutes } from '../utils/dateUtils.js';
+import { isValidDateString, timeToMinutes, getTodayString } from '../utils/dateUtils.js';
 
 const timeRegex = /^((0?[1-9]|1[0-2]):[0-5][0-9]\s*(AM|PM)|([01]?\d|2[0-3]):[0-5][0-9])$/i;
 
@@ -19,7 +19,8 @@ export const createTaskSchema = z
     date: z
       .string({ required_error: 'Date is mandatory' })
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be formatted as YYYY-MM-DD')
-      .refine(isValidDateString, 'Invalid calendar date'),
+      .refine(isValidDateString, 'Invalid calendar date')
+      .refine((d) => d >= getTodayString(), 'Cannot create tasks on past dates'),
     startTime: z
       .string({ required_error: 'Start time is mandatory' })
       .trim()

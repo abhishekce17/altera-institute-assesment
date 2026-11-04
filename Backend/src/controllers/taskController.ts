@@ -171,6 +171,15 @@ export async function createTask(req: Request, res: Response, next: NextFunction
 
     const { title, description, date, startTime, endTime, priority, status } = req.body;
 
+    const today = getTodayString();
+    if (date < today) {
+      res.status(400).json({
+        success: false,
+        error: 'Cannot create tasks on past dates. Please select today or a future date.',
+      });
+      return;
+    }
+
     const task = new Task({
       userId: user._id, // Enforce user ownership
       title,
@@ -225,6 +234,14 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
 
     const updates = { ...req.body };
     if (updates.date) {
+      const today = getTodayString();
+      if (updates.date < today) {
+        res.status(400).json({
+          success: false,
+          error: 'Cannot move task to a past date. Please select today or a future date.',
+        });
+        return;
+      }
       updates.weekStart = getWeekStart(updates.date);
     }
     delete updates.userId; // Prevent hijacking ownership

@@ -48,6 +48,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
 }) => {
   const isEditing = Boolean(initialTask);
   const today = getTodayISO();
+  const safeDefaultDate = defaultDate && defaultDate >= today ? defaultDate : today;
 
   const [title, setTitle] = useState<string>(
     initialFormData?.title ?? (initialTask ? initialTask.title : '')
@@ -56,7 +57,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
     initialFormData?.description ?? (initialTask?.description || '')
   );
   const [date, setDate] = useState<string>(
-    initialFormData?.date ?? (initialTask ? initialTask.date : defaultDate || today)
+    initialFormData?.date ?? (initialTask ? initialTask.date : safeDefaultDate)
   );
   const [startTime, setStartTime] = useState<string>(
     initialFormData?.startTime ?? (initialTask ? initialTask.startTime : '09:00 AM')
@@ -96,9 +97,13 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
       return;
     }
 
-    // Validation 2: Date required
+    // Validation 2: Date required & cannot be in the past
     if (!date) {
       setError('Task date is mandatory.');
+      return;
+    }
+    if (date < today) {
+      setError('Cannot schedule tasks on past dates. Please select today or a future date.');
       return;
     }
 
@@ -263,6 +268,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                 id="task-date"
                 type="date"
                 required
+                min={today}
                 value={date}
                 onChange={(e) => {
                   setDate(e.target.value);
@@ -366,7 +372,9 @@ export const TaskModal: React.FC<TaskModalProps> = (props) => {
 
   const editingTask = props.initialTask !== undefined ? props.initialTask : storeEditingTask;
   const initialFormData = props.initialFormData !== undefined ? props.initialFormData : storePending?.formData;
-  const defaultDate = props.defaultDate ?? storeSelectedDate;
+  const today = getTodayISO();
+  const rawDate = props.defaultDate ?? storeSelectedDate;
+  const defaultDate = rawDate && rawDate >= today ? rawDate : today;
   const onClose = props.onClose ?? closeTaskModal;
 
   const handleSubmit = props.onSubmit || (async (formData: TaskFormData): Promise<boolean> => {

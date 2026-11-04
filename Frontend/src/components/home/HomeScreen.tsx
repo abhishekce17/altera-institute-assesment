@@ -7,6 +7,7 @@ import { TaskList } from '../tasks/TaskList';
 import { SummaryCardsSkeleton, ProgressBarSkeleton } from '../ui/Skeleton';
 import { useTasks } from '../../hooks/useTasks';
 import { useAppStore } from '../../store/useAppStore';
+import { getTodayISO, formatDisplayDate } from '../../utils/date';
 import type { Task, WeeklyStats } from '../../types/task';
 import { Calendar, CheckCircle2 } from 'lucide-react';
 
@@ -36,6 +37,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
     deleteTask,
   } = useTasks();
 
+  const today = getTodayISO();
+  const selectedDate = props.selectedDate ?? useAppStore((state) => state.selectedDate);
   const showAllTasks = props.showAllTasks ?? useAppStore((state) => state.showAllTasks);
   const toggleShowAllTasks = props.onToggleShowAll ?? useAppStore((state) => state.toggleShowAllTasks);
   const openAddTask = props.onAddTaskClick ?? useAppStore((state) => state.openAddTask);
@@ -46,6 +49,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
   const isLoading = props.isLoading ?? storeIsLoading;
   const handleToggleStatus = props.onToggleStatus ?? toggleTaskStatus;
   const handleDeleteTask = props.onDeleteTask ?? deleteTask;
+
+  const isPastSelected = !showAllTasks && selectedDate < today;
+  const headingText = showAllTasks
+    ? 'This Week’s Tasks'
+    : selectedDate === today
+    ? 'Tasks Today'
+    : formatDisplayDate(selectedDate);
 
   return (
     <div className="flex-1 flex flex-col justify-between bg-white min-h-screen md:min-h-0 relative">
@@ -103,11 +113,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-slate-900">
-                  {showAllTasks ? 'This Week’s Tasks' : 'Tasks Today'}
+                  {headingText}
                 </h2>
                 <span className="px-2 py-0.5 text-xs font-semibold bg-blue-50 text-[#3866F2]">
                   {isLoading ? '...' : activeTasks.length}
                 </span>
+                {isPastSelected && (
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wider">
+                    Past Date
+                  </span>
+                )}
               </div>
               <button
                 type="button"
@@ -122,11 +137,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
             <TaskList
               tasks={activeTasks}
               isLoading={isLoading}
+              selectedDate={showAllTasks ? undefined : selectedDate}
               onToggleStatus={handleToggleStatus}
               onEdit={openEditTask}
               onDelete={handleDeleteTask}
               onAddTask={openAddTask}
-              emptyMessage={showAllTasks ? 'No tasks this week' : 'No tasks scheduled for today'}
+              emptyMessage={showAllTasks ? 'No tasks this week' : undefined}
             />
           </div>
         </div>
@@ -156,9 +172,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
           {/* Tasks Section */}
           <section className="px-5 pt-3 pb-24">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-base font-bold text-slate-900">
-                {showAllTasks ? 'This Week’s Tasks' : 'Tasks Today'}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900">
+                  {headingText}
+                </h2>
+                {isPastSelected && (
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wider">
+                    Past
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={toggleShowAllTasks}
@@ -172,11 +195,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
             <TaskList
               tasks={activeTasks}
               isLoading={isLoading}
+              selectedDate={showAllTasks ? undefined : selectedDate}
               onToggleStatus={handleToggleStatus}
               onEdit={openEditTask}
               onDelete={handleDeleteTask}
               onAddTask={openAddTask}
-              emptyMessage={showAllTasks ? 'No tasks this week' : 'No tasks scheduled for today'}
+              emptyMessage={showAllTasks ? 'No tasks this week' : undefined}
             />
           </section>
         </div>
