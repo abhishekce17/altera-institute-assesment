@@ -22,15 +22,17 @@ export interface TaskFormData {
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: TaskFormData) => void;
+  onSubmit: (data: TaskFormData) => boolean | Promise<boolean> | void;
   initialTask?: Task | null;
+  initialFormData?: TaskFormData | null;
   defaultDate?: string;
 }
 
 interface TaskModalContentProps {
   onClose: () => void;
-  onSubmit: (data: TaskFormData) => void;
+  onSubmit: (data: TaskFormData) => boolean | Promise<boolean> | void;
   initialTask?: Task | null;
+  initialFormData?: TaskFormData | null;
   defaultDate?: string;
 }
 
@@ -38,23 +40,38 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   onClose,
   onSubmit,
   initialTask,
+  initialFormData,
   defaultDate,
 }) => {
   const isEditing = Boolean(initialTask);
   const today = getTodayISO();
 
-  const [title, setTitle] = useState<string>(initialTask ? initialTask.title : '');
-  const [description, setDescription] = useState<string>(initialTask?.description || '');
-  const [date, setDate] = useState<string>(initialTask ? initialTask.date : defaultDate || today);
-  const [startTime, setStartTime] = useState<string>(initialTask ? initialTask.startTime : '09:00 AM');
-  const [endTime, setEndTime] = useState<string>(initialTask ? initialTask.endTime : '10:30 AM');
+  const [title, setTitle] = useState<string>(
+    initialFormData?.title ?? (initialTask ? initialTask.title : '')
+  );
+  const [description, setDescription] = useState<string>(
+    initialFormData?.description ?? (initialTask?.description || '')
+  );
+  const [date, setDate] = useState<string>(
+    initialFormData?.date ?? (initialTask ? initialTask.date : defaultDate || today)
+  );
+  const [startTime, setStartTime] = useState<string>(
+    initialFormData?.startTime ?? (initialTask ? initialTask.startTime : '09:00 AM')
+  );
+  const [endTime, setEndTime] = useState<string>(
+    initialFormData?.endTime ?? (initialTask ? initialTask.endTime : '10:30 AM')
+  );
   const { user } = useAuth();
   const defaultPriority = user?.preferences?.defaultPriority || 'Medium';
-  const [priority, setPriority] = useState<TaskPriority>(initialTask ? initialTask.priority : defaultPriority);
+  const [priority, setPriority] = useState<TaskPriority>(
+    initialFormData?.priority ?? (initialTask ? initialTask.priority : defaultPriority)
+  );
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setError(null);
 
     // Validation 1: Title required & length restrictions
@@ -87,16 +104,26 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
       return;
     }
 
-    onSubmit({
-      title: title.trim(),
-      description: description.trim(),
-      date,
-      startTime: to12HourDisplay(startTime),
-      endTime: to12HourDisplay(endTime),
-      priority,
-    });
+    try {
+      setIsSubmitting(true);
+      const res = await onSubmit({
+        title: title.trim(),
+        description: description.trim(),
+        date,
+        startTime: to12HourDisplay(startTime),
+        endTime: to12HourDisplay(endTime),
+        priority,
+      });
 
-    onClose();
+      // If submission succeeded (or wasn't intercepted by auth requirement), close modal
+      if (res !== false) {
+        onClose();
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to submit task.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const priorityOptions: TaskPriority[] = ['Low', 'Medium', 'High'];
@@ -288,15 +315,17 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-[#3866F2] hover:bg-[#2B52D4] text-white text-xs font-bold transition-all cursor-pointer"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 bg-[#3866F2] hover:bg-[#2B52D4] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
             >
-              {isEditing ? 'Save Changes' : 'Create Task'}
+              {isSubmitting ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Task'}
             </button>
           </div>
         </form>
@@ -310,6 +339,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   onClose,
   onSubmit,
   initialTask,
+  initialFormData,
   defaultDate,
 }) => {
   if (!isOpen) return null;
@@ -319,6 +349,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       onClose={onClose}
       onSubmit={onSubmit}
       initialTask={initialTask}
+      initialFormData={initialFormData}
       defaultDate={defaultDate}
     />
   );

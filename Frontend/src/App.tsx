@@ -68,7 +68,11 @@ export function App() {
   });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [pendingOpenTaskModal, setPendingOpenTaskModal] = useState<boolean>(false);
+  const [pendingTaskSubmission, setPendingTaskSubmission] = useState<{
+    formData: TaskFormData;
+    isEditing: boolean;
+    taskId?: string;
+  } | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const handleGetStarted = () => {
@@ -81,32 +85,59 @@ export function App() {
     setCurrentScreen('home');
   };
 
-  // When user clicks Create / Add Task, ask for login if not signed in!
+  // Open TaskModal freely - login is only required when submitting "Create Task"
   const handleOpenAddTask = () => {
-    if (!isAuthenticated) {
-      setPendingOpenTaskModal(true);
-      setIsAuthModalOpen(true);
-      return;
-    }
     setEditingTask(null);
     setIsModalOpen(true);
   };
 
   const handleOpenEditTask = (task: Task) => {
-    if (!isAuthenticated) {
-      setIsAuthModalOpen(true);
-      return;
-    }
     setEditingTask(task);
     setIsModalOpen(true);
   };
 
-  const handleModalSubmit = (formData: TaskFormData) => {
-    if (editingTask) {
-      updateTask(editingTask._id, formData);
-    } else {
-      addTask(formData);
+  const handleModalSubmit = async (formData: TaskFormData): Promise<boolean> => {
+    // If user is not authenticated, preserve the entered data and prompt for login
+    if (!isAuthenticated) {
+      setPendingTaskSubmission({
+        formData,
+        isEditing: Boolean(editingTask),
+        taskId: editingTask?._id,
+      });
+      setIsAuthModalOpen(true);
+      return false; // Prevent TaskModal from closing or resetting
     }
+
+    if (editingTask) {
+      await updateTask(editingTask._id, formData);
+    } else {
+      await addTask(formData);
+    }
+    setPendingTaskSubmission(null);
+    setEditingTask(null);
+    setIsModalOpen(false);
+    return true;
+  };
+
+  const handleAuthSuccess = async () => {
+    setIsAuthModalOpen(false);
+    if (pendingTaskSubmission) {
+      const { formData, isEditing, taskId } = pendingTaskSubmission;
+      try {
+        if (isEditing && taskId) {
+          await updateTask(taskId, formData);
+        } else {
+          await addTask(formData);
+        }
+      } catch (err) {
+        console.error('[App] Failed to save pending task post-login:', err);
+      } finally {
+        setPendingTaskSubmission(null);
+        setIsModalOpen(false);
+        setEditingTask(null);
+      }
+    }
+    await refreshTasks();
   };
 
   return (
@@ -157,27 +188,29 @@ export function App() {
       {/* Task Modal for Add and Edit */}
       <TaskModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setPendingTaskSubmission(null);
+          setEditingTask(null);
+        }}
         onSubmit={handleModalSubmit}
         initialTask={editingTask}
+        initialFormData={pendingTaskSubmission?.formData}
         defaultDate={selectedDate}
       />
 
       {/* Authentication Modal triggered on Create Task or Account access */}
       <AuthModal
         isOpen={isAuthModalOpen}
+        subtitle={
+          pendingTaskSubmission
+            ? 'Sign in or create an account to save and create your task'
+            : undefined
+        }
         onClose={() => {
           setIsAuthModalOpen(false);
-          setPendingOpenTaskModal(false);
         }}
-        onSuccess={() => {
-          refreshTasks();
-          if (pendingOpenTaskModal) {
-            setEditingTask(null);
-            setIsModalOpen(true);
-            setPendingOpenTaskModal(false);
-          }
-        }}
+        onSuccess={handleAuthSuccess}
       />
     </MobileContainer>
   );

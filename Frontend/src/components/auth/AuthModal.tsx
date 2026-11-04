@@ -7,6 +7,7 @@ interface AuthModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   initialMode?: 'login' | 'register';
+  subtitle?: string;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -14,6 +15,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   onSuccess,
   initialMode = 'login',
+  subtitle,
 }) => {
   const { login, register } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
@@ -57,7 +59,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 transition-opacity"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 transition-opacity"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -71,12 +73,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
             <div>
               <h2 id="auth-modal-title" className="text-sm font-bold text-slate-900">
-                {mode === 'login' ? 'Sign In to To-Do' : 'Create MongoDB Account'}
+                {mode === 'login' ? 'Sign In to To-Do' : 'Create Account'}
               </h2>
               <p className="text-[11px] text-slate-500">
-                {mode === 'login'
-                  ? 'Access your saved tasks & preferences'
-                  : 'Start syncing tasks directly to MongoDB'}
+                {subtitle ||
+                  (mode === 'login'
+                    ? 'Access your saved tasks & preferences'
+                    : 'Start syncing tasks directly to MongoDB')}
               </p>
             </div>
           </div>
