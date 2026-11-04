@@ -52,9 +52,9 @@ export function App() {
     refreshTasks,
   } = useTasks();
 
-  // Fetch data whenever user arrives at the Home screen or logs in
+  // Fetch data whenever user arrives at the Home screen and is authenticated
   useEffect(() => {
-    if (currentScreen === 'home') {
+    if (currentScreen === 'home' && isAuthenticated) {
       refreshTasks();
     }
   }, [currentScreen, refreshTasks, isAuthenticated]);

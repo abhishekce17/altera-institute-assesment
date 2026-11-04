@@ -7,19 +7,21 @@ import type { AuthRequest } from '../middlewares/auth.js';
 /**
  * GET /api/tasks
  * Filter tasks by date, weekStart, status, or search keywords.
- * Scoped to the authenticated user if logged in.
+ * Strictly scoped to the authenticated user.
  */
 export async function getTasks(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const user = (req as AuthRequest).user;
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
+
     const { date, weekStart, status, search } = req.query;
 
-    const filter: Record<string, any> = {};
-
-    // Filter by user if authenticated
-    if (user) {
-      filter.userId = user._id;
-    }
+    const filter: Record<string, any> = {
+      userId: user._id, // Enforce strict user-isolation
+    };
 
     if (date && typeof date === 'string') {
       filter.date = date;
@@ -35,9 +37,14 @@ export async function getTasks(req: Request, res: Response, next: NextFunction):
 
     if (search && typeof search === 'string' && search.trim().length > 0) {
       const term = search.trim();
-      filter.$or = [
-        { title: { $regex: term, $options: 'i' } },
-        { description: { $regex: term, $options: 'i' } },
+      filter.$and = [
+        { userId: user._id },
+        {
+          $or: [
+            { title: { $regex: term, $options: 'i' } },
+            { description: { $regex: term, $options: 'i' } },
+          ],
+        },
       ];
     }
 
@@ -57,11 +64,16 @@ export async function getTasks(req: Request, res: Response, next: NextFunction):
 /**
  * GET /api/tasks/stats/weekly
  * Returns open tasks count, completed tasks count, and progress percentage for a week.
- * Scoped to authenticated user if logged in.
+ * Strictly scoped to the authenticated user.
  */
 export async function getWeeklyStats(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const user = (req as AuthRequest).user;
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
+
     const { date, weekStart } = req.query;
 
     let targetWeekStart: string;
@@ -76,10 +88,10 @@ export async function getWeeklyStats(req: Request, res: Response, next: NextFunc
 
     const targetWeekEnd = getWeekEnd(targetWeekStart);
 
-    const matchQuery: Record<string, any> = { weekStart: targetWeekStart };
-    if (user) {
-      matchQuery.userId = user._id;
-    }
+    const matchQuery: Record<string, any> = {
+      userId: user._id,
+      weekStart: targetWeekStart,
+    };
 
     const stats = await Task.aggregate([
       { $match: matchQuery },
@@ -117,6 +129,12 @@ export async function getWeeklyStats(req: Request, res: Response, next: NextFunc
  */
 export async function getTaskById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const user = (req as AuthRequest).user;
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
+
     const { id } = req.params;
 
     if (typeof id !== 'string' || !mongoose.Types.ObjectId.isValid(id)) {
@@ -124,7 +142,7 @@ export async function getTaskById(req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    const task = await Task.findById(id);
+    const task = await Task.findOne({ _id: id, userId: user._id });
     if (!task) {
       res.status(404).json({ success: false, error: 'Task not found' });
       return;
@@ -145,10 +163,15 @@ export async function getTaskById(req: Request, res: Response, next: NextFunctio
 export async function createTask(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const user = (req as AuthRequest).user;
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
+
     const { title, description, date, startTime, endTime, priority, status } = req.body;
 
     const task = new Task({
-      userId: user ? user._id : undefined,
+      userId: user._id, // Enforce user ownership
       title,
       description,
       date,
@@ -176,6 +199,12 @@ export async function createTask(req: Request, res: Response, next: NextFunction
  */
 export async function updateTask(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const user = (req as AuthRequest).user;
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
+
     const { id } = req.params;
 
     if (typeof id !== 'string' || !mongoose.Types.ObjectId.isValid(id)) {
@@ -187,11 +216,16 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
     if (updates.date) {
       updates.weekStart = getWeekStart(updates.date);
     }
+    delete updates.userId; // Prevent hijacking ownership
 
-    const updatedTask = await Task.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedTask = await Task.findOneAndUpdate(
+      { _id: id, userId: user._id },
+      updates,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!updatedTask) {
       res.status(404).json({ success: false, error: 'Task not found' });
@@ -214,6 +248,12 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
  */
 export async function patchTaskStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const user = (req as AuthRequest).user;
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
+
     const { id } = req.params;
 
     if (typeof id !== 'string' || !mongoose.Types.ObjectId.isValid(id)) {
@@ -221,7 +261,7 @@ export async function patchTaskStatus(req: Request, res: Response, next: NextFun
       return;
     }
 
-    const task = await Task.findById(id);
+    const task = await Task.findOne({ _id: id, userId: user._id });
     if (!task) {
       res.status(404).json({ success: false, error: 'Task not found' });
       return;
@@ -246,6 +286,12 @@ export async function patchTaskStatus(req: Request, res: Response, next: NextFun
  */
 export async function deleteTask(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const user = (req as AuthRequest).user;
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
+
     const { id } = req.params;
 
     if (typeof id !== 'string' || !mongoose.Types.ObjectId.isValid(id)) {
@@ -253,7 +299,7 @@ export async function deleteTask(req: Request, res: Response, next: NextFunction
       return;
     }
 
-    const deleted = await Task.findByIdAndDelete(id);
+    const deleted = await Task.findOneAndDelete({ _id: id, userId: user._id });
     if (!deleted) {
       res.status(404).json({ success: false, error: 'Task not found' });
       return;

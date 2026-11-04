@@ -3,19 +3,27 @@ import type { Task, WeeklyStats } from '../types/task';
 import type { TaskFormData } from '../components/tasks/TaskModal';
 import { getMondayOfDate, getTodayISO } from '../utils/date';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export function useTasks() {
+  const { isAuthenticated, user } = useAuth();
   const today = getTodayISO();
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [showAllTasks, setShowAllTasks] = useState<boolean>(false);
   const [isOnline, setIsOnline] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Pure dynamic state from MongoDB - no static or mock items
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  // Load tasks from backend API connected to MongoDB Atlas
+  // Load tasks from backend API connected to MongoDB Atlas for the authenticated user
   const loadServerTasks = useCallback(async () => {
+    if (!isAuthenticated) {
+      setTasks([]);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const serverTasks = await api.fetchTasks();
@@ -27,13 +35,20 @@ export function useTasks() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
-  // Sync with MongoDB on mount
+  // Sync with MongoDB whenever authenticated user changes or logs in
   useEffect(() => {
     let ignore = false;
 
+    if (!isAuthenticated) {
+      setTasks([]);
+      setIsLoading(false);
+      return;
+    }
+
     async function initialSync() {
+      setIsLoading(true);
       try {
         const serverTasks = await api.fetchTasks();
         if (!ignore) {
@@ -57,7 +72,7 @@ export function useTasks() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [isAuthenticated, user?._id]);
 
   // Active week start (Monday)
   const activeWeekStart = useMemo(() => getMondayOfDate(selectedDate), [selectedDate]);

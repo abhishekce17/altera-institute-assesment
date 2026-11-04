@@ -9,7 +9,7 @@ import {
   updateTask,
 } from '../controllers/taskController.js';
 import { validateBody, validateQuery } from '../middlewares/validate.js';
-import { optionalAuth } from '../middlewares/auth.js';
+import { authenticate } from '../middlewares/auth.js';
 import {
   createTaskSchema,
   patchStatusSchema,
@@ -19,8 +19,8 @@ import {
 
 const router = Router();
 
-// Apply optionalAuth to all task routes to scope queries and creations to authenticated user
-router.use(optionalAuth);
+// Apply mandatory authentication to all task routes: only authenticated users can access or manage tasks
+router.use(authenticate);
 
 // Stats route (must be defined before /:id)
 router.get('/stats/weekly', getWeeklyStats);
