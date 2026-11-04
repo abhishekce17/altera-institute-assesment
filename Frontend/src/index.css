@@ -32,9 +32,10 @@ body {
   border-radius: 0 !important;
 }
 
-/* Round dot badges for notification and active date indicator */
+/* Round dot badges for notification, active date indicator, and mobile FAB button */
 .notification-badge,
-.date-dot {
+.date-dot,
+.fab-circle {
   border-radius: 9999px !important;
 }
 

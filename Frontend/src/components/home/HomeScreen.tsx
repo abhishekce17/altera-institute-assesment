@@ -5,6 +5,7 @@ import { SummaryCards } from './SummaryCards';
 import { ProgressBar } from './ProgressBar';
 import { TaskList } from '../tasks/TaskList';
 import { SummaryCardsSkeleton, ProgressBarSkeleton } from '../ui/Skeleton';
+import { FloatingActionButton } from '../ui/FloatingActionButton';
 import { useTasks } from '../../hooks/useTasks';
 import { useAppStore } from '../../store/useAppStore';
 import { getTodayISO, formatDisplayDate } from '../../utils/date';
@@ -209,6 +210,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
               emptyMessage={showAllTasks ? 'No tasks this week' : undefined}
             />
           </section>
+
+          {/* Floating Action Button for Mobile Add Task matching Figma */}
+          <FloatingActionButton onClick={openAddTask} />
         </div>
       </div>
     </div>
