@@ -104,3 +104,4 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     </div>
   );
 };
+

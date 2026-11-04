@@ -72,3 +72,4 @@ Phase 4 connects the decoupled React frontend and Express backend into an integr
   - If unreachable, the app seamlessly falls back to pre-seeded mock tasks and local storage mutations, displaying a subtle badge: `"Demo / Offline Mode"`.
   - Once the backend is online, it displays `"API Connected"` and loads live data directly from MongoDB.
   - This guarantees the assignment evaluator will never face a broken screen or unhandled rejection!
+

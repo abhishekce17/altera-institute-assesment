@@ -41,3 +41,4 @@ Phase 4 bridges the React frontend and the Express/Node.js backend into a cohesi
   - Root `README.md` with setup guides, API specs, and deployment walkthrough.
 - **Out of Scope**:
   - Manual provisioning of paid external third-party cloud accounts (documented with instructions for the evaluator).
+

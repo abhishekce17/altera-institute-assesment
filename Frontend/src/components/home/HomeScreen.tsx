@@ -13,6 +13,7 @@ interface HomeScreenProps {
   weeklyStats: WeeklyStats;
   selectedDate: string;
   showAllTasks: boolean;
+  isOnline?: boolean;
   onSelectDate: (date: string) => void;
   onToggleShowAll: () => void;
   onSearchClick: () => void;
@@ -27,6 +28,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   weeklyStats,
   selectedDate,
   showAllTasks,
+  isOnline,
   onSelectDate,
   onToggleShowAll,
   onSearchClick,
@@ -42,7 +44,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     <div className="flex-1 flex flex-col justify-between bg-white min-h-screen sm:min-h-[850px]">
       <div className="space-y-1">
         {/* Top Header */}
-        <Header onSearchClick={onSearchClick} />
+        <Header onSearchClick={onSearchClick} isOnline={isOnline} />
 
         {/* 7-Day Calendar Strip */}
         <DateStrip days={weekDays} onSelectDate={onSelectDate} />
