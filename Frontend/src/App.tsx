@@ -28,7 +28,6 @@ export function App() {
     weeklyStats,
     selectedDate,
     showAllTasks,
-    isOnline,
     setSelectedDate,
     setShowAllTasks,
     addTask,
@@ -99,7 +98,6 @@ export function App() {
           weeklyStats={weeklyStats}
           selectedDate={selectedDate}
           showAllTasks={showAllTasks}
-          isOnline={isOnline}
           onSelectDate={setSelectedDate}
           onToggleShowAll={() => setShowAllTasks(!showAllTasks)}
           onSearchClick={() => setCurrentScreen('search')}

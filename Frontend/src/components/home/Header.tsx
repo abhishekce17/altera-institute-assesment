@@ -6,7 +6,6 @@ interface HeaderProps {
   onAddTaskClick?: () => void;
   onSettingsClick?: () => void;
   onNotificationClick?: () => void;
-  isOnline?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -14,7 +13,6 @@ export const Header: React.FC<HeaderProps> = ({
   onAddTaskClick,
   onSettingsClick,
   onNotificationClick,
-  isOnline = false,
 }) => {
   return (
     <header className="px-5 md:px-8 pt-4 md:pt-6 pb-2 md:pb-4 border-b border-slate-100 bg-white">
@@ -28,22 +26,6 @@ export const Header: React.FC<HeaderProps> = ({
           <div>
             <h1 className="text-lg font-bold text-slate-900 leading-tight">My Tasks</h1>
             <p className="text-xs text-slate-400">Weekly Planner & To-Do</p>
-          </div>
-
-          {/* Connection Status Badge */}
-          <div
-            className={`ml-2 px-2.5 py-0.5 rounded-full text-[11px] font-semibold flex items-center gap-1.5 select-none ${
-              isOnline
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-amber-50 text-amber-700 border border-amber-200'
-            }`}
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
-              }`}
-            />
-            {isOnline ? 'API Live' : 'Demo Mode'}
           </div>
         </div>
 
@@ -110,22 +92,6 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Settings className="w-5 h-5 stroke-[1.8]" />
             </button>
-
-            {/* Connection Status Badge */}
-            <div
-              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1.5 select-none ${
-                isOnline
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
-                  : 'bg-amber-50 text-amber-700 border border-amber-200/80'
-              }`}
-            >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
-                }`}
-              />
-              {isOnline ? 'API Live' : 'Demo Mode'}
-            </div>
           </div>
 
           <div className="flex items-center gap-1">

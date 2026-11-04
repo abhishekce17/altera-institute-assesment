@@ -14,7 +14,6 @@ interface HomeScreenProps {
   weeklyStats: WeeklyStats;
   selectedDate: string;
   showAllTasks: boolean;
-  isOnline?: boolean;
   onSelectDate: (date: string) => void;
   onToggleShowAll: () => void;
   onSearchClick: () => void;
@@ -29,7 +28,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   weeklyStats,
   selectedDate,
   showAllTasks,
-  isOnline,
   onSelectDate,
   onToggleShowAll,
   onSearchClick,
@@ -48,7 +46,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <Header
           onSearchClick={onSearchClick}
           onAddTaskClick={onAddTaskClick}
-          isOnline={isOnline}
         />
 
         {/* Desktop Layout (2-Column Grid on lg+) */}
