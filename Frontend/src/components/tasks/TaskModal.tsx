@@ -7,6 +7,9 @@ import {
   timeToMinutes,
   to24HourInput,
   to12HourDisplay,
+  getCurrentTimeMinutes,
+  minutesTo12Hour,
+  getDefaultTaskTimes,
 } from '../../utils/date';
 import { useAuth } from '../../context/AuthContext';
 
@@ -49,6 +52,8 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   const isEditing = Boolean(initialTask);
   const today = getTodayISO();
   const safeDefaultDate = defaultDate && defaultDate >= today ? defaultDate : today;
+  const initialDate = initialFormData?.date ?? (initialTask ? initialTask.date : safeDefaultDate);
+  const defaultTimes = getDefaultTaskTimes(initialDate);
 
   const [title, setTitle] = useState<string>(
     initialFormData?.title ?? (initialTask ? initialTask.title : '')
@@ -56,14 +61,12 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   const [description, setDescription] = useState<string>(
     initialFormData?.description ?? (initialTask?.description || '')
   );
-  const [date, setDate] = useState<string>(
-    initialFormData?.date ?? (initialTask ? initialTask.date : safeDefaultDate)
-  );
+  const [date, setDate] = useState<string>(initialDate);
   const [startTime, setStartTime] = useState<string>(
-    initialFormData?.startTime ?? (initialTask ? initialTask.startTime : '09:00 AM')
+    initialFormData?.startTime ?? (initialTask ? initialTask.startTime : defaultTimes.startTime)
   );
   const [endTime, setEndTime] = useState<string>(
-    initialFormData?.endTime ?? (initialTask ? initialTask.endTime : '10:30 AM')
+    initialFormData?.endTime ?? (initialTask ? initialTask.endTime : defaultTimes.endTime)
   );
   const { user } = useAuth();
   const defaultPriority = user?.preferences?.defaultPriority || 'Medium';
@@ -72,6 +75,22 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleDateChange = (newDate: string) => {
+    setDate(newDate);
+    if (error) setError(null);
+
+    // If date is today, make sure startTime hasn't already passed
+    if (newDate === today && !isEditing) {
+      const currentMin = getCurrentTimeMinutes();
+      const startMin = timeToMinutes(startTime);
+      if (startMin !== null && startMin <= currentMin) {
+        const futureTimes = getDefaultTaskTimes(newDate);
+        setStartTime(futureTimes.startTime);
+        setEndTime(futureTimes.endTime);
+      }
+    }
+  };
 
   const hasChanges = isEditing
     ? title.trim() !== (initialTask?.title || '').trim() ||
@@ -119,6 +138,15 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
     if (endMin <= startMin) {
       setError('End time must be later than start time.');
       return;
+    }
+
+    // Validation 4: Time cannot be in the past for today
+    if (date === today) {
+      const currentMin = getCurrentTimeMinutes();
+      if (startMin <= currentMin) {
+        setError('Cannot schedule tasks for a time that has already passed today. Please select an upcoming time.');
+        return;
+      }
     }
 
     try {
@@ -220,10 +248,18 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                   <input
                     type="time"
                     required
+                    min={date === today ? to24HourInput(minutesTo12Hour(getCurrentTimeMinutes() + 1)) : undefined}
                     value={to24HourInput(startTime)}
                     onChange={(e) => {
-                      setStartTime(to12HourDisplay(e.target.value));
+                      const newStart = to12HourDisplay(e.target.value);
+                      setStartTime(newStart);
                       if (error) setError(null);
+                      const newStartMin = timeToMinutes(newStart);
+                      const currentEndMin = timeToMinutes(endTime);
+                      if (newStartMin !== null && (currentEndMin === null || currentEndMin <= newStartMin)) {
+                        const nextEndMin = Math.min(1439, newStartMin + 60);
+                        setEndTime(minutesTo12Hour(nextEndMin));
+                      }
                     }}
                     aria-label="Start Time"
                     className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] outline-none transition-all font-semibold cursor-pointer"
@@ -242,6 +278,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                   <input
                     type="time"
                     required
+                    min={to24HourInput(startTime)}
                     value={to24HourInput(endTime)}
                     onChange={(e) => {
                       setEndTime(to12HourDisplay(e.target.value));
@@ -270,10 +307,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                 required
                 min={today}
                 value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  if (error) setError(null);
-                }}
+                onChange={(e) => handleDateChange(e.target.value)}
                 className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] outline-none transition-all font-semibold cursor-pointer"
               />
             </div>

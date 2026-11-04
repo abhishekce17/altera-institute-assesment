@@ -119,3 +119,46 @@ export function to12HourDisplay(time24: string): string {
   const h12 = rawH % 12 === 0 ? 12 : rawH % 12;
   return `${String(h12).padStart(2, '0')}:${m} ${meridiem}`;
 }
+
+/**
+ * Get current local time in minutes from midnight (0 to 1439).
+ */
+export function getCurrentTimeMinutes(): number {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+/**
+ * Format minutes from midnight to standard 12-hour display format ("02:30 PM").
+ */
+export function minutesTo12Hour(minutes: number): string {
+  const clamped = Math.max(0, Math.min(1439, minutes));
+  const rawH = Math.floor(clamped / 60);
+  const m = String(clamped % 60).padStart(2, '0');
+  const meridiem = rawH >= 12 ? 'PM' : 'AM';
+  const h12 = rawH % 12 === 0 ? 12 : rawH % 12;
+  return `${String(h12).padStart(2, '0')}:${m} ${meridiem}`;
+}
+
+/**
+ * Get default start and end times for task scheduling.
+ * If date is today, calculates the next available future 15-minute slot.
+ * If date is in the future, defaults to 09:00 AM and 10:30 AM.
+ */
+export function getDefaultTaskTimes(dateStr: string): { startTime: string; endTime: string } {
+  const today = getTodayISO();
+  if (dateStr > today) {
+    return { startTime: '09:00 AM', endTime: '10:30 AM' };
+  }
+
+  // Today: compute next upcoming 15-minute slot
+  const nowMin = getCurrentTimeMinutes();
+  const nextSlot = Math.ceil((nowMin + 1) / 15) * 15;
+  const startMin = Math.min(1380, Math.max(0, nextSlot)); // Max 11:00 PM
+  const endMin = Math.min(1439, startMin + 60); // 1 hour duration, max 11:59 PM
+
+  return {
+    startTime: minutesTo12Hour(startMin),
+    endTime: minutesTo12Hour(endMin),
+  };
+}

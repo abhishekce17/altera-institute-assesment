@@ -79,3 +79,11 @@ export function timeToMinutes(timeStr: string): number | null {
 
   return null;
 }
+
+/**
+ * Returns current local time in minutes from midnight (0 to 1439).
+ */
+export function getCurrentTimeMinutes(): number {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}

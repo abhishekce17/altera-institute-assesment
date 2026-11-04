@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { isValidDateString, timeToMinutes, getTodayString } from '../utils/dateUtils.js';
+import {
+  isValidDateString,
+  timeToMinutes,
+  getTodayString,
+  getCurrentTimeMinutes,
+} from '../utils/dateUtils.js';
 
 const timeRegex = /^((0?[1-9]|1[0-2]):[0-5][0-9]\s*(AM|PM)|([01]?\d|2[0-3]):[0-5][0-9])$/i;
 
@@ -44,6 +49,23 @@ export const createTaskSchema = z
     {
       message: 'End time must be after start time',
       path: ['endTime'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.date === getTodayString()) {
+        const startMin = timeToMinutes(data.startTime);
+        const currentMin = getCurrentTimeMinutes();
+        // Allow a 2-minute latency margin for form submission
+        if (startMin !== null && startMin < currentMin - 2) {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message: 'Cannot schedule tasks for a time that has already passed today',
+      path: ['startTime'],
     }
   );
 
