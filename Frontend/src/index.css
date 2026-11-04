@@ -32,8 +32,9 @@ body {
   border-radius: 0 !important;
 }
 
-/* Round badge for notification indicator */
-.notification-badge {
+/* Round dot badges for notification and active date indicator */
+.notification-badge,
+.date-dot {
   border-radius: 9999px !important;
 }
 

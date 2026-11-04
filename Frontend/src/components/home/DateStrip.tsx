@@ -44,9 +44,9 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
               {/* Active selection dot indicator */}
               <div className="h-1.5 mt-1.5 flex items-center justify-center">
                 {isSelected ? (
-                  <span className="w-1.5 h-1.5 bg-white" />
+                  <span className="date-dot w-1.5 h-1.5 bg-white" />
                 ) : (
-                  <span className="w-1.5 h-1.5 bg-transparent" />
+                  <span className="date-dot w-1.5 h-1.5 bg-transparent" />
                 )}
               </div>
             </button>
