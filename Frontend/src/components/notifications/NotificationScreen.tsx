@@ -65,11 +65,10 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
             <button
               type="button"
               onClick={handleBack}
-              aria-label="Back to home"
-              className="p-2 -ml-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1.5"
+              aria-label="Back to dashboard"
+              className="p-2 -ml-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-center"
             >
               <ArrowLeft className="w-5 h-5 stroke-[2]" />
-              <span className="hidden md:inline text-xs font-semibold text-slate-600">Back to Dashboard</span>
             </button>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold text-slate-900">Notifications</h1>
