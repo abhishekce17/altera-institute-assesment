@@ -88,3 +88,4 @@ TaskSchema.index({ weekStart: 1, status: 1 });
 TaskSchema.index({ title: 'text', description: 'text' });
 
 export const Task = mongoose.model<ITask>('Task', TaskSchema);
+

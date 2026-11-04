@@ -67,3 +67,4 @@ export const queryTaskSchema = z.object({
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 export type PatchStatusInput = z.infer<typeof patchStatusSchema>;
+

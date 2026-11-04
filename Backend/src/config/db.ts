@@ -28,3 +28,4 @@ export async function disconnectDB(): Promise<void> {
     console.error(`[Database Error] Disconnect error: ${(error as Error).message}`);
   }
 }
+

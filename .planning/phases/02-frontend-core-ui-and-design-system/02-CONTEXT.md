@@ -63,3 +63,4 @@ Frontend/src/
   - Swipe-to-delete touch gestures and task list row interactions (Phase 3).
   - Search view Screen 4 (Phase 3).
   - Live backend API fetching and TanStack Query / Axios client sync (Phase 4).
+

@@ -71,3 +71,4 @@ Phase 2 translates the visual specifications from Figma into modular, reusable R
   - If not set, display `'onboarding'`.
   - Tapping "Get Started" sets `localStorage.setItem('has_onboarded', 'true')` and switches to `'home'`.
   - Allow an option (e.g. from header settings) to reset or revisit onboarding.
+
