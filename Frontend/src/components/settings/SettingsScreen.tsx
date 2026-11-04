@@ -38,6 +38,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+  const initialName = user?.name || '';
+  const initialEmail = user?.email || '';
+  const initialPriority = user?.preferences?.defaultPriority || 'Medium';
+  const initialNotification = user?.preferences?.notificationEnabled ?? true;
+
+  const hasChanges =
+    name.trim() !== initialName.trim() ||
+    email.trim() !== initialEmail.trim() ||
+    defaultPriority !== initialPriority ||
+    notificationEnabled !== initialNotification;
+
   // Sync form state when user changes
   useEffect(() => {
     if (user) {
@@ -62,6 +73,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
 
   const handleSaveToMongoDB = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasChanges || isSaving) return;
     if (!isAuthenticated) {
       setIsAuthModalOpen(true);
       return;
@@ -297,8 +309,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
             <div>
               <button
                 type="submit"
-                disabled={isSaving}
-                className="py-3 px-6 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={!hasChanges || isSaving}
+                className={`py-3 px-6 text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                  !hasChanges || isSaving
+                    ? 'bg-slate-200 text-slate-400 border border-slate-200 cursor-not-allowed select-none'
+                    : 'bg-[#3866F2] hover:bg-[#2b54d6] text-white cursor-pointer active:scale-[0.98]'
+                }`}
               >
                 <Save className="w-4 h-4" />
                 <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>

@@ -69,6 +69,15 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const hasChanges = isEditing
+    ? title.trim() !== (initialTask?.title || '').trim() ||
+      description.trim() !== (initialTask?.description || '').trim() ||
+      date !== initialTask?.date ||
+      to12HourDisplay(startTime) !== to12HourDisplay(initialTask?.startTime || '') ||
+      to12HourDisplay(endTime) !== to12HourDisplay(initialTask?.endTime || '') ||
+      priority !== initialTask?.priority
+    : true;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -322,8 +331,12 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2.5 bg-[#3866F2] hover:bg-[#2B52D4] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+              disabled={isSubmitting || (isEditing && !hasChanges)}
+              className={`px-6 py-2.5 text-xs font-bold transition-all ${
+                isSubmitting || (isEditing && !hasChanges)
+                  ? 'bg-slate-200 text-slate-400 border border-slate-200 cursor-not-allowed select-none'
+                  : 'bg-[#3866F2] hover:bg-[#2B52D4] text-white cursor-pointer active:scale-[0.98]'
+              }`}
             >
               {isSubmitting ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Task'}
             </button>
