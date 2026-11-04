@@ -20,16 +20,20 @@ export const Header: React.FC<HeaderProps> = ({
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
-    <header className="px-5 md:px-8 pt-4 md:pt-6 pb-2 md:pb-4 border-b border-slate-100 bg-white">
+    <header className="px-5 md:px-8 py-3 md:py-4 border-b border-slate-100 bg-white">
       {/* Desktop Top Bar (hidden on mobile) */}
       <div className="hidden md:flex items-center justify-between gap-4">
         {/* Brand / Logo & User Greeting */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#3866F2] flex items-center justify-center text-white font-bold text-sm">
-            {isAuthenticated && user?.name ? user.name.slice(0, 2).toUpperCase() : <CheckSquare className="w-5 h-5 stroke-[2.2]" />}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="w-10 h-10 bg-[#3866F2] flex items-center justify-center text-white font-bold text-sm shrink-0">
+            {isAuthenticated && user?.name ? (
+              user.name.slice(0, 2).toUpperCase()
+            ) : (
+              <CheckSquare className="w-5 h-5 stroke-[2.2]" />
+            )}
           </div>
           <div>
-            <h1 className="text-lg font-bold text-slate-900 leading-tight">
+            <h1 className="text-base font-bold text-slate-900 leading-tight">
               {isAuthenticated && user?.name ? `Hello, ${user.name}` : 'My Tasks'}
             </h1>
             <p className="text-xs text-slate-400">
@@ -38,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Center / Search bar trigger */}
+        {/* Center / Search bar trigger (Uniform h-10 height) */}
         <div
           role="button"
           tabIndex={0}
@@ -49,19 +53,19 @@ export const Header: React.FC<HeaderProps> = ({
               onSearchClick();
             }
           }}
-          className="flex-1 max-w-md flex items-center justify-between px-4 py-2.5 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/90 cursor-pointer text-slate-400 transition-all"
+          className="flex-1 max-w-md h-10 flex items-center justify-between px-4 bg-slate-50 hover:bg-slate-100/90 border border-slate-200 cursor-pointer text-slate-400 transition-all"
         >
-          <span className="text-sm text-slate-400 select-none">Search for a task...</span>
-          <Search className="w-4 h-4 text-slate-500" />
+          <span className="text-xs text-slate-400 select-none">Search for a task...</span>
+          <Search className="w-4 h-4 text-slate-500 shrink-0" />
         </div>
 
-        {/* Right action controls */}
-        <div className="flex items-center gap-2">
+        {/* Right action controls (All exactly h-10 height) */}
+        <div className="flex items-center gap-2 shrink-0">
           {isAuthenticated ? (
             <button
               type="button"
               onClick={onSettingsClick}
-              className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="h-10 px-3.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer"
             >
               <UserIcon className="w-3.5 h-3.5 text-[#3866F2]" />
               <span className="max-w-[120px] truncate">{user?.name}</span>
@@ -70,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={() => setIsAuthModalOpen(true)}
-              className="px-3 py-1.5 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+              className="h-10 px-4 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Sign In</span>
@@ -81,7 +85,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onAddTaskClick}
-              className="px-4 py-2 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+              className="h-10 px-4 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>Add Task</span>
@@ -92,9 +96,9 @@ export const Header: React.FC<HeaderProps> = ({
             type="button"
             onClick={onNotificationClick}
             aria-label="Notifications"
-            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer relative"
+            className="w-10 h-10 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer relative border border-slate-200"
           >
-            <Bell className="w-5 h-5 stroke-[1.8]" />
+            <Bell className="w-4 h-4 stroke-[1.8]" />
             <span className="notification-badge absolute top-2 right-2 w-2 h-2 bg-[#3866F2] ring-2 ring-white" />
           </button>
 
@@ -102,9 +106,9 @@ export const Header: React.FC<HeaderProps> = ({
             type="button"
             onClick={onSettingsClick}
             aria-label="Settings"
-            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="w-10 h-10 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer border border-slate-200"
           >
-            <Settings className="w-5 h-5 stroke-[1.8]" />
+            <Settings className="w-4 h-4 stroke-[1.8]" />
           </button>
         </div>
       </div>
@@ -117,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={onSettingsClick}
               aria-label="Settings"
-              className="p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+              className="w-9 h-9 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
             >
               <Settings className="w-5 h-5 stroke-[1.8]" />
             </button>
@@ -128,12 +132,12 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {!isAuthenticated && (
               <button
                 type="button"
                 onClick={() => setIsAuthModalOpen(true)}
-                className="px-2.5 py-1 text-xs font-bold text-[#3866F2] hover:bg-blue-50 transition-colors cursor-pointer flex items-center gap-1"
+                className="h-8 px-3 text-xs font-bold bg-blue-50 text-[#3866F2] hover:bg-blue-100 transition-colors cursor-pointer flex items-center gap-1"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In</span>
@@ -144,7 +148,7 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={onNotificationClick}
               aria-label="Notifications"
-              className="p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer relative"
+              className="w-9 h-9 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer relative"
             >
               <Bell className="w-5 h-5 stroke-[1.8]" />
               <span className="notification-badge absolute top-2 right-2 w-2 h-2 bg-[#3866F2] ring-2 ring-white" />
@@ -163,10 +167,10 @@ export const Header: React.FC<HeaderProps> = ({
               onSearchClick();
             }
           }}
-          className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 cursor-pointer text-slate-400 transition-all"
+          className="w-full h-11 flex items-center justify-between px-4 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 cursor-pointer text-slate-400 transition-all"
         >
-          <span className="text-sm font-normal text-slate-400 select-none">Search for a task</span>
-          <Search className="w-4 h-4 text-slate-500" />
+          <span className="text-xs font-normal text-slate-400 select-none">Search for a task</span>
+          <Search className="w-4 h-4 text-slate-500 shrink-0" />
         </div>
       </div>
 
