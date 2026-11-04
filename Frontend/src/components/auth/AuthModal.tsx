@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, Mail, User as UserIcon, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { X, Lock, Mail, User as UserIcon, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface AuthModalProps {
@@ -47,20 +47,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       onClose();
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please verify your details.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDemoLogin = async () => {
-    setError(null);
-    setIsSubmitting(true);
-    try {
-      await login({ email: 'alex@example.com', password: 'password123' });
-      if (onSuccess) onSuccess();
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'Demo login failed. You can sign up with a new account.');
     } finally {
       setIsSubmitting(false);
     }
@@ -198,24 +184,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               disabled={isSubmitting}
               className="w-full py-2.5 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
             >
-              <span>{isSubmitting ? 'Processing...' : mode === 'login' ? 'Sign In' : 'Create MongoDB Account'}</span>
+              <span>{isSubmitting ? 'Processing...' : mode === 'login' ? 'Sign In' : 'Create Account'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
-
-          {/* Quick Demo Login Option for Assessor */}
-          <div className="pt-2 border-t border-slate-100 text-center">
-            <span className="block text-[11px] text-slate-400 mb-2">Evaluator Quick Access:</span>
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              disabled={isSubmitting}
-              className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>One-Click Demo Login (Alex Johnson)</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
