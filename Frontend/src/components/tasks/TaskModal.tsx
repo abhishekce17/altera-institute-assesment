@@ -55,6 +55,38 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   const initialDate = initialFormData?.date ?? (initialTask ? initialTask.date : safeDefaultDate);
   const defaultTimes = getDefaultTaskTimes(initialDate);
 
+  // Guard against any initial past time on today's date
+  const getInitialStartTime = (): string => {
+    if (initialTask) return initialTask.startTime;
+    if (initialFormData?.startTime) {
+      if (initialDate === today) {
+        const min = timeToMinutes(initialFormData.startTime);
+        if (min !== null && min > getCurrentTimeMinutes()) {
+          return initialFormData.startTime;
+        }
+        return defaultTimes.startTime;
+      }
+      return initialFormData.startTime;
+    }
+    return defaultTimes.startTime;
+  };
+
+  const getInitialEndTime = (): string => {
+    if (initialTask) return initialTask.endTime;
+    if (initialFormData?.endTime) {
+      if (initialDate === today) {
+        const startMin = timeToMinutes(getInitialStartTime());
+        const endMin = timeToMinutes(initialFormData.endTime);
+        if (startMin !== null && endMin !== null && endMin > startMin) {
+          return initialFormData.endTime;
+        }
+        return defaultTimes.endTime;
+      }
+      return initialFormData.endTime;
+    }
+    return defaultTimes.endTime;
+  };
+
   const [title, setTitle] = useState<string>(
     initialFormData?.title ?? (initialTask ? initialTask.title : '')
   );
@@ -62,12 +94,8 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
     initialFormData?.description ?? (initialTask?.description || '')
   );
   const [date, setDate] = useState<string>(initialDate);
-  const [startTime, setStartTime] = useState<string>(
-    initialFormData?.startTime ?? (initialTask ? initialTask.startTime : defaultTimes.startTime)
-  );
-  const [endTime, setEndTime] = useState<string>(
-    initialFormData?.endTime ?? (initialTask ? initialTask.endTime : defaultTimes.endTime)
-  );
+  const [startTime, setStartTime] = useState<string>(getInitialStartTime());
+  const [endTime, setEndTime] = useState<string>(getInitialEndTime());
   const { user } = useAuth();
   const defaultPriority = user?.preferences?.defaultPriority || 'Medium';
   const [priority, setPriority] = useState<TaskPriority>(
@@ -76,11 +104,64 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const startMinutes = timeToMinutes(startTime);
+  const currentMinutes = getCurrentTimeMinutes();
+  const isStartTimePast = date === today && startMinutes !== null && startMinutes <= currentMinutes;
+
+  const handleStartTimeChange = (val24: string) => {
+    const newStart = to12HourDisplay(val24);
+    const newStartMin = timeToMinutes(newStart);
+    const currentMin = getCurrentTimeMinutes();
+
+    // Actively refuse to select any time that has already passed today
+    if (date === today && newStartMin !== null && newStartMin <= currentMin) {
+      setError(`Cannot select ${newStart} — that time has already passed today.`);
+      const futureTimes = getDefaultTaskTimes(today);
+      setStartTime(futureTimes.startTime);
+      const futureStartMin = timeToMinutes(futureTimes.startTime);
+      const currentEndMin = timeToMinutes(endTime);
+      if (futureStartMin !== null && (currentEndMin === null || currentEndMin <= futureStartMin)) {
+        setEndTime(futureTimes.endTime);
+      }
+      return;
+    }
+
+    if (error) setError(null);
+    setStartTime(newStart);
+
+    // If endTime <= newStartTime, auto-advance endTime to 1 hour after start
+    const currentEndMin = timeToMinutes(endTime);
+    if (newStartMin !== null && (currentEndMin === null || currentEndMin <= newStartMin)) {
+      const nextEndMin = Math.min(1439, newStartMin + 60);
+      setEndTime(minutesTo12Hour(nextEndMin));
+    }
+  };
+
+  const handleEndTimeChange = (val24: string) => {
+    const newEnd = to12HourDisplay(val24);
+    const newEndMin = timeToMinutes(newEnd);
+    const startMin = timeToMinutes(startTime);
+    const currentMin = getCurrentTimeMinutes();
+
+    if (date === today && newEndMin !== null && newEndMin <= currentMin) {
+      setError('End time cannot be in the past.');
+      return;
+    }
+
+    if (startMin !== null && newEndMin !== null && newEndMin <= startMin) {
+      setError('End time must be later than start time.');
+      return;
+    }
+
+    if (error) setError(null);
+    setEndTime(newEnd);
+  };
+
   const handleDateChange = (newDate: string) => {
     setDate(newDate);
     if (error) setError(null);
 
-    // If date is today, make sure startTime hasn't already passed
+    // If date is today, ensure startTime hasn't already passed
     if (newDate === today && !isEditing) {
       const currentMin = getCurrentTimeMinutes();
       const startMin = timeToMinutes(startTime);
@@ -250,19 +331,13 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                     required
                     min={date === today ? to24HourInput(minutesTo12Hour(getCurrentTimeMinutes() + 1)) : undefined}
                     value={to24HourInput(startTime)}
-                    onChange={(e) => {
-                      const newStart = to12HourDisplay(e.target.value);
-                      setStartTime(newStart);
-                      if (error) setError(null);
-                      const newStartMin = timeToMinutes(newStart);
-                      const currentEndMin = timeToMinutes(endTime);
-                      if (newStartMin !== null && (currentEndMin === null || currentEndMin <= newStartMin)) {
-                        const nextEndMin = Math.min(1439, newStartMin + 60);
-                        setEndTime(minutesTo12Hour(nextEndMin));
-                      }
-                    }}
+                    onChange={(e) => handleStartTimeChange(e.target.value)}
                     aria-label="Start Time"
-                    className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] outline-none transition-all font-semibold cursor-pointer"
+                    className={`w-full pl-10 pr-3 py-2.5 text-xs text-slate-800 focus:bg-white outline-none transition-all font-semibold cursor-pointer border ${
+                      isStartTimePast
+                        ? 'bg-red-50/50 border-red-300 focus:border-red-500 text-red-700'
+                        : 'bg-slate-50 border-slate-200 focus:border-[#3866F2]'
+                    }`}
                   />
                 </div>
               </div>
@@ -280,16 +355,19 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                     required
                     min={to24HourInput(startTime)}
                     value={to24HourInput(endTime)}
-                    onChange={(e) => {
-                      setEndTime(to12HourDisplay(e.target.value));
-                      if (error) setError(null);
-                    }}
+                    onChange={(e) => handleEndTimeChange(e.target.value)}
                     aria-label="End Time"
                     className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] outline-none transition-all font-semibold cursor-pointer"
                   />
                 </div>
               </div>
             </div>
+            {isStartTimePast && (
+              <p className="text-[11px] font-medium text-red-600 mt-1.5 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>Selected start time has already passed today. Please pick an upcoming time.</span>
+              </p>
+            )}
           </div>
 
           {/* Set Date */}
@@ -374,9 +452,9 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || (isEditing && !hasChanges)}
+              disabled={isSubmitting || (isEditing && !hasChanges) || isStartTimePast}
               className={`px-6 py-2.5 text-xs font-bold transition-all ${
-                isSubmitting || (isEditing && !hasChanges)
+                isSubmitting || (isEditing && !hasChanges) || isStartTimePast
                   ? 'bg-slate-200 text-slate-400 border border-slate-200 cursor-not-allowed select-none'
                   : 'bg-[#3866F2] hover:bg-[#2B52D4] text-white cursor-pointer active:scale-[0.98]'
               }`}
