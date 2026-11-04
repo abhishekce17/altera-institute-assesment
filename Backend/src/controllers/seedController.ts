@@ -32,9 +32,9 @@ function getCookieOptions() {
  */
 export async function seedInvigilatorData(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const email = (req.body?.email || req.query?.email || 'invigilator@test.com').toString().toLowerCase().trim();
-    const password = (req.body?.password || req.query?.password || 'Invigilator123!').toString();
-    const name = (req.body?.name || req.query?.name || 'Test Invigilator').toString();
+    const email = (req.body?.email || req.query?.email || 'user@test.com').toString().toLowerCase().trim();
+    const password = (req.body?.password || req.query?.password || 'User123!').toString();
+    const name = (req.body?.name || req.query?.name || 'Demo User').toString();
 
     // 1. Find or create the test user
     let user = await User.findOne({ email });
@@ -125,8 +125,8 @@ export async function seedInvigilatorData(req: Request, res: Response, next: Nex
         status: 'completed',
       },
       {
-        title: 'SDE Evaluation & Feature Demonstration',
-        description: 'Live demonstration of task creation, bi-directional calendar navigation, and metrics for invigilator.',
+        title: 'Feature Demonstration & Walkthrough',
+        description: 'Live demonstration of task creation, bi-directional calendar navigation, and metrics.',
         date: today,
         startTime: '02:00 PM',
         endTime: '03:30 PM',
@@ -195,8 +195,8 @@ export async function seedInvigilatorData(req: Request, res: Response, next: Nex
     await Notification.insertMany([
       {
         userId,
-        title: 'Welcome, Invigilator!',
-        message: 'Your evaluation test environment is ready with sample tasks across past, today, and future dates.',
+        title: 'Welcome to Task Manager!',
+        message: 'Your workspace is ready with sample tasks across past, today, and future dates.',
         type: 'progress',
         isRead: false,
       },
@@ -210,7 +210,7 @@ export async function seedInvigilatorData(req: Request, res: Response, next: Nex
       {
         userId,
         title: 'Upcoming Task Reminder',
-        message: 'SDE Evaluation & Feature Demonstration is scheduled for today at 02:00 PM.',
+        message: 'Feature Demonstration & Walkthrough is scheduled for today at 02:00 PM.',
         type: 'reminder',
         isRead: true,
       },
@@ -232,7 +232,7 @@ export async function seedInvigilatorData(req: Request, res: Response, next: Nex
 
     res.status(200).json({
       success: true,
-      message: 'Invigilator test user and multi-date tasks seeded successfully into MongoDB Atlas.',
+      message: 'Demo user and multi-date tasks seeded successfully into MongoDB Atlas.',
       credentials: {
         email,
         password,

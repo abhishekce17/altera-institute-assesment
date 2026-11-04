@@ -268,7 +268,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </button>
           </form>
 
-          {/* Quick Invigilator Demo / Seed Trigger */}
+          {/* Quick Demo User Seed Trigger */}
           <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col items-center">
             <button
               type="button"
@@ -277,7 +277,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-[#3866F2] text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 border border-blue-200"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>1-Click Seed & Login as Invigilator</span>
+              <span>1-Click Seed & Demo Login</span>
             </button>
             <p className="text-[10px] text-slate-400 mt-1 text-center">
               Prepopulates past, present & future tasks into MongoDB Atlas
