@@ -16,8 +16,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
           alt="Onboarding Background"
           className="w-full h-full object-cover object-top select-none"
         />
-        {/* Soft gradient blend for mobile */}
-        <div className="md:hidden absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent" />
       </div>
 
       {/* Information and Call-to-Action: Bottom on mobile, Right half on desktop */}
