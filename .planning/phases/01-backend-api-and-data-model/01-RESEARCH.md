@@ -92,3 +92,4 @@ For task search (REQ-TASK-05):
   - `typescript`, `@types/node`, `@types/express`, `@types/cors`, `@types/morgan`
   - `tsx`: Ultra-fast TypeScript execution engine for dev and scripts.
   - `vitest`, `supertest`, `@types/supertest`, `mongodb-memory-server` for testing.
+

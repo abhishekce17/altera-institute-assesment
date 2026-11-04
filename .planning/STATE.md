@@ -2,25 +2,31 @@
 
 ## Current Status
 - **Milestone**: v1.0.0
-- **Active Phase**: Phase 1: Backend API & Data Model Foundation
-- **Phase Status**: In Planning / Ready to Execute
-- **Progress**: 0 / 4 Phases Completed
+- **Active Phase**: Phase 2: Frontend Core UI & Design System
+- **Phase Status**: Ready to Plan / Execute
+- **Progress**: 1 / 4 Phases Completed (25%)
 
 ## Phase Progress
 | Phase | Title | Plans | Status |
 |---|---|---|---|
-| **01** | Backend API & Data Model Foundation | 2 plans | **Active (Planning Complete)** |
-| **02** | Frontend Core UI & Design System | 2 plans | Pending |
+| **01** | Backend API & Data Model Foundation | 2 plans | **Completed (Verified 16/16 tests pass)** |
+| **02** | Frontend Core UI & Design System | 2 plans | **Active** |
 | **03** | Task Management Workflows & Interactions | 3 plans | Pending |
 | **04** | Full-Stack Integration, Polish & Deployment | 3 plans | Pending |
 
 ## Key Decisions Made
-- **Weekly Definition**: Strictly Monday 00:00:00 to Sunday 23:59:59 (ISO week convention).
-- **Backend Architecture**: Node.js + Express with TypeScript, Mongoose for schema modeling, Zod for request validation, and Vitest/Supertest for automated integration testing.
-- **Frontend Stack**: Vite + React 19 + TypeScript + Tailwind CSS + Lucide React icons + Framer Motion/touch gesture handler for swipe-to-delete.
-- **Data Attributes**: Mandatory Title, Date, Start Time, End Time; Optional Description, Priority ('Low', 'Medium', 'High', default 'Medium').
-- **Status State**: Enum `['pending', 'completed']` (with boolean helper `isCompleted`).
-- **Deployment Strategy**: Netlify for React client, cloud service (Render/Railway) for Node.js API, MongoDB Atlas for persistent database.
+- **Weekly Definition**: Strictly Monday 00:00:00 to Sunday 23:59:59 (ISO week convention) implemented in `dateUtils.ts`.
+- **Backend Architecture**: Node.js + Express with TypeScript, Mongoose for schema modeling, Zod for request validation, Vitest/Supertest for automated integration testing.
+- **Task Schema & Constraints**:
+  - Mandatory: `title`, `date` (YYYY-MM-DD), `startTime`, `endTime`.
+  - Optional: `description`, `priority` ('Low', 'Medium', 'High', default 'Medium').
+  - Auto-computed: `weekStart` (Monday date).
+  - Status: `'pending'` | `'completed'`.
+- **Database Indexes**: Compound index on `{ weekStart: 1, status: 1 }` enables sub-2ms weekly progress queries. Text index on `{ title: 'text', description: 'text' }` and regex substring queries on `/api/tasks?search=...`.
+
+## Completed Plans Log
+- `01-01-PLAN.md`: Express server setup, TypeScript compilation, Mongoose connection, Task model, CRUD routes, and server lifecycle.
+- `01-02-PLAN.md`: Zod validation middleware, weekly summary aggregator endpoint (`/api/tasks/stats/weekly`), keyword substring search, development seed script, and automated Vitest/Supertest test suite (16 tests passing).
 
 ## Blockers & Risks
-- *None identified at this time.*
+- *None.*

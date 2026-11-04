@@ -68,3 +68,4 @@ flowchart TD
   2. Weekly stats and daily lists reflect database changes immediately.
   3. Application builds cleanly with `npm run build` in both Frontend and Backend.
   4. Netlify deployment configuration and production environment variables documented and verified.
+

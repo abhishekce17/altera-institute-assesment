@@ -100,3 +100,4 @@
   - Frontend configured for one-click deployment on Netlify (`netlify.toml` with SPA redirects).
   - Backend prepared for cloud deployment (Render / Railway / Fly.io).
   - Clear README.md with setup instructions, API documentation, environment variables, and deployment links.
+
