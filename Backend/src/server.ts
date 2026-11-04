@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 5001;
 async function startServer() {
   try {
     await connectDB();
-    const server = app.listen(PORT, () => {
+    const server = app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`[Server] To-Do App backend running on http://localhost:${PORT}`);
     });
 
