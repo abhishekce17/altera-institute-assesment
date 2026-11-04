@@ -49,10 +49,14 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
                 {day.dayNumber}
               </span>
 
-              {/* Active selection dot indicator */}
+              {/* Current date indicator dot (only displayed on today's date box) */}
               <div className="h-1.5 mt-1.5 flex items-center justify-center">
-                {isSelected ? (
-                  <span className="date-dot w-1.5 h-1.5 bg-white" />
+                {day.isToday ? (
+                  <span
+                    className={`date-dot w-1.5 h-1.5 ${
+                      isSelected ? 'bg-white' : 'bg-[#3866F2]'
+                    }`}
+                  />
                 ) : (
                   <span className="date-dot w-1.5 h-1.5 bg-transparent" />
                 )}
