@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, CheckCircle2, Clock, Trash2, CalendarCheck } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
+import { NotificationListSkeleton } from '../ui/Skeleton';
 
 interface NotificationScreenProps {
   onBack?: () => void;
@@ -64,9 +65,7 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
         {/* Notifications List */}
         <div className="flex-1 overflow-y-auto no-scrollbar space-y-2">
           {isLoading ? (
-            <div className="py-20 text-center text-slate-400">
-              <p className="text-xs font-medium text-slate-400">Loading notifications from database...</p>
-            </div>
+            <NotificationListSkeleton count={4} />
           ) : notifications.length === 0 ? (
             <div className="py-20 text-center text-slate-400 bg-slate-50/60 border border-dashed border-slate-200">
               <Bell className="w-10 h-10 mx-auto text-slate-300 mb-2 stroke-[1.5]" />

@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import type { TaskPriority } from '../../types/task';
 import { useAuth } from '../../context/AuthContext';
 import { AuthModal } from '../auth/AuthModal';
+import { SettingsSkeleton } from '../ui/Skeleton';
 
 interface SettingsScreenProps {
   onBack?: () => void;
@@ -24,7 +25,7 @@ interface SettingsScreenProps {
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefreshData }) => {
   const navigate = useNavigate();
   const handleBack = onBack || (() => navigate('/home'));
-  const { user, isAuthenticated, logout, updateProfile, refreshProfile } = useAuth();
+  const { user, isAuthenticated, isLoading, logout, updateProfile, refreshProfile } = useAuth();
 
   // Local form state initialized from MongoDB user profile
   const [name, setName] = useState(user?.name || '');
@@ -169,7 +170,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
           </div>
         )}
 
-        {!isAuthenticated ? (
+        {/* Main Content: Skeleton Loading | Unauthenticated Prompt | Authenticated Form */}
+        {isLoading ? (
+          <SettingsSkeleton />
+        ) : !isAuthenticated ? (
           <div className="border border-slate-200 p-8 text-center bg-slate-50/50 my-auto">
             <div className="w-12 h-12 bg-[#3866F2] text-white flex items-center justify-center mx-auto mb-3 font-bold text-base">
               <LogIn className="w-5 h-5" />

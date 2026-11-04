@@ -4,6 +4,7 @@ import { DateStrip } from './DateStrip';
 import { SummaryCards } from './SummaryCards';
 import { ProgressBar } from './ProgressBar';
 import { TaskList } from '../tasks/TaskList';
+import { SummaryCardsSkeleton, ProgressBarSkeleton } from '../ui/Skeleton';
 import { useTasks } from '../../hooks/useTasks';
 import { useAppStore } from '../../store/useAppStore';
 import type { Task, WeeklyStats } from '../../types/task';
@@ -14,6 +15,7 @@ interface HomeScreenProps {
   weeklyStats?: WeeklyStats;
   selectedDate?: string;
   showAllTasks?: boolean;
+  isLoading?: boolean;
   onSelectDate?: (date: string) => void;
   onToggleShowAll?: () => void;
   onSearchClick?: () => void;
@@ -29,6 +31,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
   const {
     displayedTasks: storeTasks,
     weeklyStats: storeWeeklyStats,
+    isLoading: storeIsLoading,
     toggleTaskStatus,
     deleteTask,
   } = useTasks();
@@ -40,6 +43,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
 
   const activeTasks = props.tasks ?? storeTasks;
   const activeWeeklyStats = props.weeklyStats ?? storeWeeklyStats;
+  const isLoading = props.isLoading ?? storeIsLoading;
   const handleToggleStatus = props.onToggleStatus ?? toggleTaskStatus;
   const handleDeleteTask = props.onDeleteTask ?? deleteTask;
 
@@ -76,13 +80,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
                 </div>
               </div>
 
-              <SummaryCards
-                completedCount={activeWeeklyStats.completed}
-                pendingCount={activeWeeklyStats.open}
-                subtitle="This Week"
-              />
-
-              <ProgressBar percentage={activeWeeklyStats.progressPercentage} />
+              {isLoading ? (
+                <>
+                  <SummaryCardsSkeleton />
+                  <ProgressBarSkeleton />
+                </>
+              ) : (
+                <>
+                  <SummaryCards
+                    completedCount={activeWeeklyStats.completed}
+                    pendingCount={activeWeeklyStats.open}
+                    subtitle="This Week"
+                  />
+                  <ProgressBar percentage={activeWeeklyStats.progressPercentage} />
+                </>
+              )}
             </div>
           </div>
 
@@ -94,7 +106,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
                   {showAllTasks ? 'This Week’s Tasks' : 'Tasks Today'}
                 </h2>
                 <span className="px-2 py-0.5 text-xs font-semibold bg-blue-50 text-[#3866F2]">
-                  {activeTasks.length}
+                  {isLoading ? '...' : activeTasks.length}
                 </span>
               </div>
               <button
@@ -106,9 +118,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
               </button>
             </div>
 
-            {/* Interactive Task List */}
+            {/* Interactive Task List with Skeleton Support */}
             <TaskList
               tasks={activeTasks}
+              isLoading={isLoading}
               onToggleStatus={handleToggleStatus}
               onEdit={openEditTask}
               onDelete={handleDeleteTask}
@@ -124,14 +137,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
           <DateStrip onSelectDate={props.onSelectDate} />
 
           {/* Weekly Metrics Summary Cards */}
-          <SummaryCards
-            completedCount={activeWeeklyStats.completed}
-            pendingCount={activeWeeklyStats.open}
-            subtitle="This Week"
-          />
-
-          {/* Weekly Progress Bar */}
-          <ProgressBar percentage={activeWeeklyStats.progressPercentage} />
+          {isLoading ? (
+            <>
+              <SummaryCardsSkeleton />
+              <ProgressBarSkeleton />
+            </>
+          ) : (
+            <>
+              <SummaryCards
+                completedCount={activeWeeklyStats.completed}
+                pendingCount={activeWeeklyStats.open}
+                subtitle="This Week"
+              />
+              <ProgressBar percentage={activeWeeklyStats.progressPercentage} />
+            </>
+          )}
 
           {/* Tasks Section */}
           <section className="px-5 pt-3 pb-24">
@@ -148,9 +168,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
               </button>
             </div>
 
-            {/* Interactive Task List with Swipe-to-Delete */}
+            {/* Interactive Task List with Swipe-to-Delete and Skeleton Loading */}
             <TaskList
               tasks={activeTasks}
+              isLoading={isLoading}
               onToggleStatus={handleToggleStatus}
               onEdit={openEditTask}
               onDelete={handleDeleteTask}

@@ -2,12 +2,14 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, X } from 'lucide-react';
 import { TaskItem } from '../tasks/TaskItem';
+import { TaskListSkeleton } from '../ui/Skeleton';
 import { useTasks } from '../../hooks/useTasks';
 import { useAppStore } from '../../store/useAppStore';
 import type { Task } from '../../types/task';
 
 interface SearchScreenProps {
   tasks?: Task[];
+  isLoading?: boolean;
   onBack?: () => void;
   onToggleStatus?: (id: string) => void;
   onEdit?: (task: Task) => void;
@@ -16,10 +18,11 @@ interface SearchScreenProps {
 
 export const SearchScreen: React.FC<SearchScreenProps> = (props) => {
   const navigate = useNavigate();
-  const { tasks: storeTasks, toggleTaskStatus, deleteTask } = useTasks();
+  const { tasks: storeTasks, isLoading: storeIsLoading, toggleTaskStatus, deleteTask } = useTasks();
   const openEditTask = useAppStore((state) => state.openEditTask);
 
   const activeTasks = props.tasks ?? storeTasks;
+  const isLoading = props.isLoading ?? storeIsLoading;
   const handleBack = props.onBack || (() => navigate('/home'));
   const handleToggleStatus = props.onToggleStatus ?? toggleTaskStatus;
   const handleEdit = props.onEdit ?? openEditTask;
@@ -90,7 +93,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = (props) => {
 
         {/* Results List */}
         <div className="flex-1 overflow-y-auto no-scrollbar space-y-2">
-          {filteredTasks.length === 0 ? (
+          {isLoading ? (
+            <TaskListSkeleton count={4} />
+          ) : filteredTasks.length === 0 ? (
             <div className="py-20 text-center text-slate-400 bg-slate-50/60 border border-dashed border-slate-200">
               <Search className="w-10 h-10 mx-auto text-slate-300 mb-2 stroke-[1.5]" />
               <p className="text-sm font-semibold text-slate-700">No matching tasks found</p>

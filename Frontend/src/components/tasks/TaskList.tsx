@@ -1,10 +1,12 @@
 import React from 'react';
 import { CheckCircle2, Plus } from 'lucide-react';
 import { TaskItem } from './TaskItem';
+import { TaskListSkeleton } from '../ui/Skeleton';
 import type { Task } from '../../types/task';
 
 interface TaskListProps {
   tasks: Task[];
+  isLoading?: boolean;
   onToggleStatus: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
@@ -14,12 +16,17 @@ interface TaskListProps {
 
 export const TaskList: React.FC<TaskListProps> = ({
   tasks,
+  isLoading = false,
   onToggleStatus,
   onEdit,
   onDelete,
   onAddTask,
   emptyMessage = 'No tasks scheduled for this day',
 }) => {
+  if (isLoading) {
+    return <TaskListSkeleton count={3} />;
+  }
+
   if (tasks.length === 0) {
     return (
       <div className="py-12 px-4 border border-dashed border-slate-200/90 flex flex-col items-center justify-center text-center bg-slate-50/50 my-2">
@@ -58,4 +65,3 @@ export const TaskList: React.FC<TaskListProps> = ({
     </div>
   );
 };
-

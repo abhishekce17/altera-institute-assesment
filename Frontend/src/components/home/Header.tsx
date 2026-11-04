@@ -19,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNotificationClick,
 }) => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const { unreadCount } = useNotifications();
   const openAddTask = useAppStore((state) => state.openAddTask);
   const openAuthModal = useAppStore((state) => state.openAuthModal);
@@ -71,7 +71,9 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right action controls (All exactly h-10 height) */}
         <div className="flex items-center gap-2 shrink-0">
-          {isAuthenticated ? (
+          {isLoading ? (
+            <div className="h-10 w-24 bg-slate-100 border border-slate-200 animate-pulse" />
+          ) : isAuthenticated ? (
             <button
               type="button"
               onClick={handleSettings}
@@ -143,7 +145,9 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5">
-            {!isAuthenticated && (
+            {isLoading ? (
+              <div className="h-8 w-16 bg-slate-100 animate-pulse" />
+            ) : !isAuthenticated ? (
               <button
                 type="button"
                 onClick={() => openAuthModal()}
@@ -152,7 +156,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Sign In</span>
               </button>
-            )}
+            ) : null}
 
             <button
               type="button"
