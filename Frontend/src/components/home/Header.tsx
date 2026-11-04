@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="hidden md:flex items-center justify-between gap-4">
         {/* Brand / Logo */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#3866F2] flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+          <div className="w-10 h-10 rounded-xl bg-[#3866F2] flex items-center justify-center text-white">
             <CheckSquare className="w-5 h-5 stroke-[2.2]" />
           </div>
           <div>
@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
               onSearchClick();
             }
           }}
-          className="flex-1 max-w-md flex items-center justify-between px-4 py-2.5 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/90 rounded-xl cursor-pointer text-slate-400 transition-all shadow-xs"
+          className="flex-1 max-w-md flex items-center justify-between px-4 py-2.5 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/90 rounded-xl cursor-pointer text-slate-400 transition-all"
         >
           <span className="text-sm text-slate-400 select-none">Search for a task...</span>
           <Search className="w-4 h-4 text-slate-500" />
@@ -70,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onAddTaskClick}
-              className="px-4 py-2 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white text-xs font-semibold rounded-xl shadow-md shadow-blue-500/25 flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-4 py-2 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>Add Task</span>
@@ -152,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
               onSearchClick();
             }
           }}
-          className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl cursor-pointer text-slate-400 transition-all shadow-xs"
+          className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 rounded-2xl cursor-pointer text-slate-400 transition-all"
         >
           <span className="text-sm font-normal text-slate-400 select-none">Search for a task</span>
           <Search className="w-4 h-4 text-slate-500" />

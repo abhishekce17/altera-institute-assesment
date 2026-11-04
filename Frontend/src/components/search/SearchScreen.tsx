@@ -56,7 +56,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
             autoFocus
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type task title or keyword (e.g., Wireframe, Meeting, Homework)..."
-            className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all shadow-xs"
+            className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all"
           />
           {query ? (
             <button

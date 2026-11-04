@@ -85,7 +85,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
       />
 
       {/* Modal / Bottom Sheet Content: Bottom sheet on mobile, centered dialog on desktop */}
-      <div className="relative w-full sm:max-w-lg md:max-w-xl bg-white rounded-t-[32px] sm:rounded-3xl shadow-2xl p-6 md:p-8 z-10 max-h-[92vh] overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-8 duration-200">
+      <div className="relative w-full sm:max-w-lg md:max-w-xl bg-white rounded-t-[32px] sm:rounded-3xl border border-slate-200/80 p-6 md:p-8 z-10 max-h-[92vh] overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-8 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
@@ -201,10 +201,10 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
                     className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center ${
                       isSelected
                         ? opt === 'High'
-                          ? 'bg-red-500 text-white border-red-500 shadow-sm shadow-red-500/20'
+                          ? 'bg-red-500 text-white border-red-500'
                           : opt === 'Medium'
-                          ? 'bg-[#3866F2] text-white border-[#3866F2] shadow-sm shadow-blue-500/20'
-                          : 'bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-500/20'
+                          ? 'bg-[#3866F2] text-white border-[#3866F2]'
+                          : 'bg-emerald-600 text-white border-emerald-600'
                         : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
@@ -234,7 +234,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-sm rounded-2xl shadow-lg shadow-blue-500/30 transition-all cursor-pointer flex items-center justify-center"
+              className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-sm rounded-2xl transition-all cursor-pointer flex items-center justify-center"
             >
               {isEditing ? 'Save changes' : 'Create task'}
             </button>

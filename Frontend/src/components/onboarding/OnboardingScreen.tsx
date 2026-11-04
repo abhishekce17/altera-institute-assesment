@@ -77,7 +77,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
           <button
             type="button"
             onClick={onGetStarted}
-            className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-base rounded-2xl shadow-lg shadow-blue-500/30 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-base rounded-2xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
           >
             Get Started
           </button>

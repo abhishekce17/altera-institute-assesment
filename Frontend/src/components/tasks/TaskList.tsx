@@ -34,7 +34,7 @@ export const TaskList: React.FC<TaskListProps> = ({
           <button
             type="button"
             onClick={onAddTask}
-            className="mt-4 px-4 py-2 bg-[#3866F2] hover:bg-[#2B52D4] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            className="mt-4 px-4 py-2 bg-[#3866F2] hover:bg-[#2B52D4] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             Add Task
