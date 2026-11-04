@@ -241,7 +241,14 @@ class ApiService {
     credentials: { email: string; password: string };
     token: string;
     user: User;
-    stats: any;
+    stats: {
+      totalTasks: number;
+      completed: number;
+      pending: number;
+      pastDates: string[];
+      todayDate: string;
+      futureDates: string[];
+    };
     distinctDates: string[];
     tasks: Task[];
   }> {

@@ -1,128 +1,162 @@
 import { connectDB, disconnectDB } from './config/db.js';
-import { Task } from './models/Task.js';
 import { User } from './models/User.js';
+import { Task } from './models/Task.js';
+import { Notification } from './models/Notification.js';
 import { hashPassword } from './utils/authUtils.js';
 import { getTodayString, getWeekStart } from './utils/dateUtils.js';
 
-const today = getTodayString();
-const monday = getWeekStart(today);
-
-// Parse year, month, day to generate dates for this week
-const [year, month, day] = monday.split('-').map(Number);
-
-function getDayOfWeek(offsetDays: number): string {
-  const d = new Date(Date.UTC(year, month - 1, day + offsetDays));
+function addDays(baseDateStr: string, days: number): string {
+  const [year, month, day] = baseDateStr.split('-').map(Number);
+  const d = new Date(Date.UTC(year, month - 1, day + days));
   return d.toISOString().split('T')[0];
 }
-
-const sampleTasks = [
-  {
-    title: 'Finishing Wireframe',
-    description: 'Complete high-fidelity mobile wireframes for the To-Do app in Figma',
-    date: today,
-    startTime: '09:00 AM',
-    endTime: '10:30 AM',
-    priority: 'High',
-    status: 'pending',
-  },
-  {
-    title: 'Meeting with team',
-    description: 'Weekly sprint planning and status sync with frontend and backend developers',
-    date: today,
-    startTime: '11:00 AM',
-    endTime: '12:00 PM',
-    priority: 'Medium',
-    status: 'pending',
-  },
-  {
-    title: 'Buy a cat food',
-    description: 'Get premium salmon and chicken pouches from pet store',
-    date: today,
-    startTime: '01:00 PM',
-    endTime: '01:30 PM',
-    priority: 'Low',
-    status: 'completed',
-  },
-  {
-    title: 'Finishing daily commission',
-    description: 'Deliver the client branding revisions and icon assets',
-    date: today,
-    startTime: '02:00 PM',
-    endTime: '04:00 PM',
-    priority: 'High',
-    status: 'completed',
-  },
-  {
-    title: 'Doing Homework',
-    description: 'Study algorithm problem sets and graph traversal exercises',
-    date: getDayOfWeek(1), // Tuesday of this week
-    startTime: '04:30 PM',
-    endTime: '06:00 PM',
-    priority: 'Medium',
-    status: 'pending',
-  },
-  {
-    title: 'Design review presentation',
-    description: 'Walk through design system and accessibility tokens with stakeholders',
-    date: getDayOfWeek(2), // Wednesday of this week
-    startTime: '10:00 AM',
-    endTime: '11:30 AM',
-    priority: 'High',
-    status: 'pending',
-  },
-  {
-    title: 'Gym session',
-    description: 'Upper body resistance training and core stability',
-    date: getDayOfWeek(3), // Thursday of this week
-    startTime: '07:00 AM',
-    endTime: '08:15 AM',
-    priority: 'Low',
-    status: 'completed',
-  },
-  {
-    title: 'Plan weekend trip',
-    description: 'Book cabin and review hiking trail directions',
-    date: getDayOfWeek(4), // Friday of this week
-    startTime: '06:00 PM',
-    endTime: '07:00 PM',
-    priority: 'Low',
-    status: 'pending',
-  },
-];
 
 async function seed() {
   try {
     console.log('[Seed] Connecting to MongoDB...');
     await connectDB();
 
-    console.log('[Seed] Clearing existing tasks and demo users...');
-    await Task.deleteMany({});
-    await User.deleteMany({ email: 'alex@example.com' });
+    const email = 'user@test.com';
+    const password = 'User123!';
+    const name = 'Demo User';
 
-    console.log('[Seed] Creating demo user in MongoDB...');
-    const demoUser = await User.create({
-      name: 'Alex Johnson',
-      email: 'alex@example.com',
-      password: hashPassword('password123'),
-      preferences: {
-        defaultPriority: 'Medium',
-        notificationEnabled: true,
-      },
-      hasOnboarded: true,
-    });
-    console.log(`[Seed] Demo user created: ${demoUser.email} (_id: ${demoUser._id})`);
+    let user = await User.findOne({ email });
+    const hashedPassword = hashPassword(password);
 
-    console.log('[Seed] Inserting sample tasks linked to demo user...');
-    for (const t of sampleTasks) {
-      await Task.create({
-        ...t,
-        userId: demoUser._id,
-        weekStart: getWeekStart(t.date),
+    if (user) {
+      user.name = name;
+      user.password = hashedPassword;
+      user.hasOnboarded = true;
+      await user.save();
+    } else {
+      user = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+        preferences: {
+          defaultPriority: 'Medium',
+          notificationEnabled: true,
+        },
+        hasOnboarded: true,
       });
     }
 
-    const count = await Task.countDocuments();
-    console.log(`[Seed] Successfully seeded ${count} tasks in MongoDB for user ${demoUser.email}!`);
+    const userId = user._id;
+    await Task.deleteMany({ userId });
+    await Notification.deleteMany({ userId });
+
+    const today = getTodayString();
+    const tasks = [
+      {
+        title: 'Review System Architecture & Requirements',
+        description: 'Analyzed product specifications, state management, and MongoDB schema designs.',
+        date: addDays(today, -5),
+        startTime: '09:00 AM',
+        endTime: '11:00 AM',
+        priority: 'High' as const,
+        status: 'completed' as const,
+      },
+      {
+        title: 'Database Indexing & Auth Security Audit',
+        description: 'Configured unique compound indexes, bcrypt salting, and secure HTTP-only cookies.',
+        date: addDays(today, -3),
+        startTime: '11:30 AM',
+        endTime: '01:00 PM',
+        priority: 'Medium' as const,
+        status: 'completed' as const,
+      },
+      {
+        title: 'Write Comprehensive API Documentation',
+        description: 'Documented REST endpoints, request payloads, and status codes for evaluators.',
+        date: addDays(today, -1),
+        startTime: '02:00 PM',
+        endTime: '03:30 PM',
+        priority: 'Low' as const,
+        status: 'completed' as const,
+      },
+      {
+        title: 'Refactor Swipe-To-Delete Component',
+        description: 'Unified PointerEvents and click suppression to ensure smooth swiping.',
+        date: addDays(today, -1),
+        startTime: '04:00 PM',
+        endTime: '05:00 PM',
+        priority: 'Medium' as const,
+        status: 'pending' as const,
+      },
+      {
+        title: 'Morning Daily Standup & Sprint Sync',
+        description: 'Discussed blockers, milestone progress, and task assignments with team.',
+        date: today,
+        startTime: '09:30 AM',
+        endTime: '10:30 AM',
+        priority: 'Medium' as const,
+        status: 'completed' as const,
+      },
+      {
+        title: 'Feature Demonstration & Walkthrough',
+        description: 'Live demonstration of task creation, bi-directional calendar navigation, and metrics.',
+        date: today,
+        startTime: '02:00 PM',
+        endTime: '03:30 PM',
+        priority: 'High' as const,
+        status: 'pending' as const,
+      },
+      {
+        title: 'Verify Edge Cases & Responsive UI',
+        description: 'Checked 375px mobile to 1440px desktop layouts with zero layout shifts.',
+        date: today,
+        startTime: '04:30 PM',
+        endTime: '05:30 PM',
+        priority: 'Low' as const,
+        status: 'pending' as const,
+      },
+      {
+        title: 'Automated E2E & Regression Test Run',
+        description: 'Verify task lifecycle, token persistence, and optimistic cache mutations.',
+        date: addDays(today, 1),
+        startTime: '10:00 AM',
+        endTime: '11:30 AM',
+        priority: 'High' as const,
+        status: 'pending' as const,
+      },
+      {
+        title: 'Client Progress Review & Demo',
+        description: 'Walkthrough of calendar strip, live metrics, and search functionality.',
+        date: addDays(today, 3),
+        startTime: '03:00 PM',
+        endTime: '04:30 PM',
+        priority: 'Medium' as const,
+        status: 'pending' as const,
+      },
+      {
+        title: 'Performance Profiling & Bundle Optimization',
+        description: 'Analyze Vite chunk sizes, memoization hooks, and network payloads.',
+        date: addDays(today, 5),
+        startTime: '01:00 PM',
+        endTime: '02:30 PM',
+        priority: 'Low' as const,
+        status: 'pending' as const,
+      },
+      {
+        title: 'Sprint Retrospective & Next Roadmap Planning',
+        description: 'Plan upcoming milestone sprints and review key deliverables.',
+        date: addDays(today, 7),
+        startTime: '11:00 AM',
+        endTime: '12:30 PM',
+        priority: 'Medium' as const,
+        status: 'pending' as const,
+      },
+    ];
+
+    await Task.insertMany(
+      tasks.map((t) => ({
+        ...t,
+        userId,
+        weekStart: getWeekStart(t.date),
+      }))
+    );
+
+    console.log(`[Seed] Seeded 11 tasks for ${user.email} (password: ${password}) in MongoDB Atlas!`);
   } catch (error) {
     console.error('[Seed] Error during seeding:', error);
   } finally {

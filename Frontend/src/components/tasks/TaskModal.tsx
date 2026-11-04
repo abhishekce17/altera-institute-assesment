@@ -245,8 +245,9 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
       if (res !== false) {
         onClose();
       }
-    } catch (err: any) {
-      setError(err?.message || 'Failed to submit task.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to submit task.';
+      setError(msg);
     } finally {
       setIsSubmitting(false);
     }

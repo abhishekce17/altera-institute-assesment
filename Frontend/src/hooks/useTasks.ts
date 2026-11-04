@@ -32,7 +32,10 @@ export function useTasks() {
     staleTime: 1000 * 30, // 30s fresh
   });
 
-  const tasks = isAuthenticated && user ? tasksQuery.data || [] : [];
+  const rawTasks = tasksQuery.data;
+  const tasks = useMemo(() => {
+    return isAuthenticated && user && Array.isArray(rawTasks) ? rawTasks : [];
+  }, [isAuthenticated, user, rawTasks]);
   const isLoading = tasksQuery.isLoading;
   const isOnline = !tasksQuery.isError;
 

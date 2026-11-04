@@ -37,12 +37,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
     deleteTask,
   } = useTasks();
 
+  const storeSelectedDate = useAppStore((state) => state.selectedDate);
+  const storeShowAllTasks = useAppStore((state) => state.showAllTasks);
+  const storeToggleShowAllTasks = useAppStore((state) => state.toggleShowAllTasks);
+  const storeOpenAddTask = useAppStore((state) => state.openAddTask);
+  const storeOpenEditTask = useAppStore((state) => state.openEditTask);
+
   const today = getTodayISO();
-  const selectedDate = props.selectedDate ?? useAppStore((state) => state.selectedDate);
-  const showAllTasks = props.showAllTasks ?? useAppStore((state) => state.showAllTasks);
-  const toggleShowAllTasks = props.onToggleShowAll ?? useAppStore((state) => state.toggleShowAllTasks);
-  const openAddTask = props.onAddTaskClick ?? useAppStore((state) => state.openAddTask);
-  const openEditTask = props.onEditTask ?? useAppStore((state) => state.openEditTask);
+  const selectedDate = props.selectedDate ?? storeSelectedDate;
+  const showAllTasks = props.showAllTasks ?? storeShowAllTasks;
+  const toggleShowAllTasks = props.onToggleShowAll ?? storeToggleShowAllTasks;
+  const openAddTask = props.onAddTaskClick ?? storeOpenAddTask;
+  const openEditTask = props.onEditTask ?? storeOpenEditTask;
 
   const activeTasks = props.tasks ?? storeTasks;
   const activeWeeklyStats = props.weeklyStats ?? storeWeeklyStats;

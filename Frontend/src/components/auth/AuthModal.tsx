@@ -86,8 +86,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       ]);
       if (onSuccess) onSuccess();
       handleClose();
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please verify your details.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Authentication failed. Please verify your details.';
+      setError(msg);
     } finally {
       setIsSubmitting(false);
     }

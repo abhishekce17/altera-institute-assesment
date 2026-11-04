@@ -8,3 +8,4 @@ router.post('/', seedInvigilatorData);
 router.get('/', seedInvigilatorData);
 
 export default router;
+

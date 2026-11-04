@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ArrowLeft,
   Check,
@@ -53,15 +53,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
     defaultPriority !== initialPriority ||
     notificationEnabled !== initialNotification;
 
-  // Sync form state when user changes
-  useEffect(() => {
-    if (user) {
-      setName(user.name);
-      setEmail(user.email);
-      setDefaultPriority(user.preferences?.defaultPriority || 'Medium');
-      setNotificationEnabled(user.preferences?.notificationEnabled ?? true);
-    }
-  }, [user]);
+  const [prevUserId, setPrevUserId] = useState(user?._id);
+  if (user && user._id !== prevUserId) {
+    setPrevUserId(user._id);
+    setName(user.name);
+    setEmail(user.email);
+    setDefaultPriority(user.preferences?.defaultPriority || 'Medium');
+    setNotificationEnabled(user.preferences?.notificationEnabled ?? true);
+  }
 
   const showNotice = (msg: string) => {
     setFeedbackMessage(msg);
@@ -108,8 +107,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
       if (onRefreshData) {
         onRefreshData();
       }
-    } catch (err: any) {
-      showError(err.message || 'Failed to save changes.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to save changes.';
+      showError(msg);
     } finally {
       setIsSaving(false);
     }

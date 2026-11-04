@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import type { User } from '../types/auth';
 import type { TaskPriority } from '../types/task';
 import { api } from '../services/api';
 import { queryClient } from '../services/queryClient';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -23,7 +23,7 @@ interface AuthContextType {
   clearError: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -34,7 +34,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = useCallback(async () => {
     try {
-      setIsLoading(true);
       // HTTP-only cookie is sent automatically by the browser with credentials: 'include'
       const profile = await api.getProfile();
       setUser(profile);
@@ -48,8 +47,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    refreshProfile();
-  }, [refreshProfile]);
+    let isMounted = true;
+    api
+      .getProfile()
+      .then((profile) => {
+        if (isMounted) {
+          setUser(profile);
+          setError(null);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const login = async (credentials: { email: string; password: string }) => {
     setIsLoading(true);
@@ -61,10 +79,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         queryClient.resetQueries({ queryKey: ['tasks'] }),
         queryClient.resetQueries({ queryKey: ['notifications'] }),
       ]);
-    } catch (err: any) {
-      const msg = err.message || 'Login failed. Please check your credentials.';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
       setError(msg);
-      throw new Error(msg);
+      throw new Error(msg, { cause: err });
     } finally {
       setIsLoading(false);
     }
@@ -80,10 +98,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         queryClient.resetQueries({ queryKey: ['tasks'] }),
         queryClient.resetQueries({ queryKey: ['notifications'] }),
       ]);
-    } catch (err: any) {
-      const msg = err.message || 'Registration failed. Please check your details.';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Registration failed. Please check your details.';
       setError(msg);
-      throw new Error(msg);
+      throw new Error(msg, { cause: err });
     } finally {
       setIsLoading(false);
     }
@@ -113,10 +131,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedUser = await api.updateProfile(updates);
       setUser(updatedUser);
       return updatedUser;
-    } catch (err: any) {
-      const msg = err.message || 'Failed to update user profile in MongoDB.';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update user profile in MongoDB.';
       setError(msg);
-      throw new Error(msg);
+      throw new Error(msg, { cause: err });
     } finally {
       setIsLoading(false);
     }
@@ -142,10 +160,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+export { useAuth } from '../hooks/useAuth';
