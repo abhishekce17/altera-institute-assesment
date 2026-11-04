@@ -47,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
               {isAuthenticated && user?.name ? `Hello, ${user.name}` : 'My Tasks'}
             </h1>
             <p className="text-xs text-slate-400">
-              {isAuthenticated && user?.email ? user.email : 'Weekly Planner & To-Do'}
+              Weekly Planner & To-Do
             </p>
           </div>
         </div>
