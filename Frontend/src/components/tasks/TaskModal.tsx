@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { X, Clock, Calendar, AlertCircle } from 'lucide-react';
 import type { Task, TaskPriority } from '../../types/task';
-import { formatDisplayDate, getTodayISO } from '../../utils/date';
+import {
+  formatDisplayDate,
+  getTodayISO,
+  timeToMinutes,
+  to24HourInput,
+  to12HourDisplay,
+} from '../../utils/date';
 import { useAuth } from '../../context/AuthContext';
 
 export interface TaskFormData {
@@ -49,19 +55,35 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
 
+    // Validation 1: Title required & length restrictions
     if (!title.trim()) {
-      setError('Task title is required');
+      setError('Task title is mandatory.');
+      return;
+    }
+    if (title.trim().length > 200) {
+      setError('Task title cannot exceed 200 characters.');
       return;
     }
 
+    // Validation 2: Date required
     if (!date) {
-      setError('Date is required');
+      setError('Task date is mandatory.');
       return;
     }
 
-    if (!startTime.trim() || !endTime.trim()) {
-      setError('Start and end times are required');
+    // Validation 3: Time format and order restrictions
+    const startMin = timeToMinutes(startTime);
+    const endMin = timeToMinutes(endTime);
+
+    if (startMin === null || endMin === null) {
+      setError('Please select valid start and end times.');
+      return;
+    }
+
+    if (endMin <= startMin) {
+      setError('End time must be later than start time.');
       return;
     }
 
@@ -69,8 +91,8 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
       title: title.trim(),
       description: description.trim(),
       date,
-      startTime: startTime.trim(),
-      endTime: endTime.trim(),
+      startTime: to12HourDisplay(startTime),
+      endTime: to12HourDisplay(endTime),
       priority,
     });
 
@@ -87,7 +109,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
         onClick={onClose}
       />
 
-      {/* Modal / Bottom Sheet Content: Bottom sheet on mobile, centered dialog on desktop */}
+      {/* Modal Content */}
       <div className="relative w-full sm:max-w-lg md:max-w-xl bg-white border border-slate-200/80 p-6 md:p-8 z-10 max-h-[92vh] overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-8 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -117,51 +139,74 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
           {/* Task Title */}
           <div>
             <label htmlFor="task-title" className="block text-xs font-bold text-slate-700 mb-1.5">
-              Task title
+              Task title *
             </label>
             <input
               id="task-title"
               type="text"
+              required
+              maxLength={200}
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
                 if (error) setError(null);
               }}
               placeholder="Doing Homework"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] outline-none transition-all font-medium"
             />
           </div>
 
-          {/* Set Time (Start & End Time side-by-side) */}
+          {/* Set Time (Native restricted time picker to prevent garbage input) */}
           <div>
-            <span className="block text-xs font-bold text-slate-700 mb-1.5">Set Time</span>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="block text-xs font-bold text-slate-700">Set Time *</span>
+              <span className="text-[11px] text-slate-400 font-medium">
+                {to12HourDisplay(startTime)} – {to12HourDisplay(endTime)}
+              </span>
+            </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Clock className="w-4 h-4" />
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                  Start Time
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="time"
+                    required
+                    value={to24HourInput(startTime)}
+                    onChange={(e) => {
+                      setStartTime(to12HourDisplay(e.target.value));
+                      if (error) setError(null);
+                    }}
+                    aria-label="Start Time"
+                    className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] outline-none transition-all font-semibold cursor-pointer"
+                  />
                 </div>
-                <input
-                  type="text"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  placeholder="09:00 AM"
-                  aria-label="Start Time"
-                  className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all font-medium"
-                />
               </div>
 
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Clock className="w-4 h-4" />
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                  End Time
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="time"
+                    required
+                    value={to24HourInput(endTime)}
+                    onChange={(e) => {
+                      setEndTime(to12HourDisplay(e.target.value));
+                      if (error) setError(null);
+                    }}
+                    aria-label="End Time"
+                    className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] outline-none transition-all font-semibold cursor-pointer"
+                  />
                 </div>
-                <input
-                  type="text"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  placeholder="10:30 AM"
-                  aria-label="End Time"
-                  className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all font-medium"
-                />
               </div>
             </div>
           </div>
@@ -169,7 +214,7 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
           {/* Set Date */}
           <div>
             <label htmlFor="task-date" className="block text-xs font-bold text-slate-700 mb-1.5">
-              Set Date
+              Set Date *
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -178,9 +223,13 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
               <input
                 id="task-date"
                 type="date"
+                required
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all font-medium cursor-pointer"
+                onChange={(e) => {
+                  setDate(e.target.value);
+                  if (error) setError(null);
+                }}
+                className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-[#3866F2] outline-none transition-all font-semibold cursor-pointer"
               />
             </div>
             {date && (
@@ -221,25 +270,33 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
           {/* Description */}
           <div>
             <label htmlFor="task-description" className="block text-xs font-bold text-slate-700 mb-1.5">
-              Description
+              Description (Optional)
             </label>
             <textarea
               id="task-description"
               rows={3}
+              maxLength={1000}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add Description"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
+              placeholder="Add details, notes, or sprint objectives..."
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#3866F2] outline-none transition-all resize-none"
             />
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-2">
+          {/* Form Actions */}
+          <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
-              className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-sm transition-all cursor-pointer flex items-center justify-center"
+              className="px-6 py-2.5 bg-[#3866F2] hover:bg-[#2B52D4] text-white text-xs font-bold transition-all cursor-pointer"
             >
-              {isEditing ? 'Save changes' : 'Create task'}
+              {isEditing ? 'Save Changes' : 'Create Task'}
             </button>
           </div>
         </form>
@@ -259,7 +316,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   return (
     <TaskModalContent
-      key={initialTask ? initialTask._id : 'new-task'}
       onClose={onClose}
       onSubmit={onSubmit}
       initialTask={initialTask}

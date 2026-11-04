@@ -65,3 +65,57 @@ export function formatDisplayDate(dateStr: string): string {
 
   return `${weekday} ${dayNum}, ${monthName}`;
 }
+
+/**
+ * Parse time string to minutes from midnight (0 to 1439).
+ * Supports 12-hour ("09:00 AM", "2:30 PM") and 24-hour ("09:00", "14:30").
+ */
+export function timeToMinutes(timeStr: string): number | null {
+  if (!timeStr || typeof timeStr !== 'string') return null;
+  const t = timeStr.trim();
+
+  // 12-hour format: "09:00 AM" or "9:00AM"
+  const match12 = t.match(/^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$/i);
+  if (match12) {
+    let hours = parseInt(match12[1], 10);
+    const minutes = parseInt(match12[2], 10);
+    const meridiem = match12[3].toUpperCase();
+    if (meridiem === 'PM' && hours !== 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  }
+
+  // 24-hour format: "09:00", "14:30"
+  const match24 = t.match(/^([01]?\d|2[0-3]):([0-5][0-9])$/);
+  if (match24) {
+    const hours = parseInt(match24[1], 10);
+    const minutes = parseInt(match24[2], 10);
+    return hours * 60 + minutes;
+  }
+
+  return null;
+}
+
+/**
+ * Convert 12-hour ("09:00 AM") or 24-hour ("9:00") to 24-hour ("09:00") for HTML5 <input type="time">.
+ */
+export function to24HourInput(timeStr: string): string {
+  const minutes = timeToMinutes(timeStr);
+  if (minutes === null) return '09:00';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/**
+ * Convert 24-hour ("14:30") to standard 12-hour display format ("02:30 PM").
+ */
+export function to12HourDisplay(time24: string): string {
+  const minutes = timeToMinutes(time24);
+  if (minutes === null) return time24;
+  const rawH = Math.floor(minutes / 60);
+  const m = String(minutes % 60).padStart(2, '0');
+  const meridiem = rawH >= 12 ? 'PM' : 'AM';
+  const h12 = rawH % 12 === 0 ? 12 : rawH % 12;
+  return `${String(h12).padStart(2, '0')}:${m} ${meridiem}`;
+}

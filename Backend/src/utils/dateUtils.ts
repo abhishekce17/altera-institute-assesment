@@ -1,5 +1,5 @@
 /**
- * Date utility functions for Monday-to-Sunday weekly calculations.
+ * Date and time utility functions for Monday-to-Sunday weekly calculations and validation.
  * Avoids timezone drift by operating strictly on UTC date components.
  */
 
@@ -54,3 +54,28 @@ export function isValidDateString(dateStr: string): boolean {
   );
 }
 
+/**
+ * Parse time string (e.g. "09:00 AM", "14:30", "2:15 PM") to minutes from midnight.
+ * Returns null if invalid.
+ */
+export function timeToMinutes(timeStr: string): number | null {
+  if (!timeStr || typeof timeStr !== 'string') return null;
+  const match12 = timeStr.trim().match(/^(0?[1-9]|1[0-2]):([0-5][0-9])\s*(AM|PM)$/i);
+  if (match12) {
+    let hours = parseInt(match12[1], 10);
+    const minutes = parseInt(match12[2], 10);
+    const meridiem = match12[3].toUpperCase();
+    if (meridiem === 'PM' && hours !== 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  }
+
+  const match24 = timeStr.trim().match(/^([01]?\d|2[0-3]):([0-5][0-9])$/);
+  if (match24) {
+    const hours = parseInt(match24[1], 10);
+    const minutes = parseInt(match24[2], 10);
+    return hours * 60 + minutes;
+  }
+
+  return null;
+}
