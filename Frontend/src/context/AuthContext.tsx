@@ -57,8 +57,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await api.login(credentials);
       setUser(res.user);
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      await Promise.all([
+        queryClient.resetQueries({ queryKey: ['tasks'] }),
+        queryClient.resetQueries({ queryKey: ['notifications'] }),
+      ]);
     } catch (err: any) {
       const msg = err.message || 'Login failed. Please check your credentials.';
       setError(msg);
@@ -74,8 +76,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await api.register(info);
       setUser(res.user);
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      await Promise.all([
+        queryClient.resetQueries({ queryKey: ['tasks'] }),
+        queryClient.resetQueries({ queryKey: ['notifications'] }),
+      ]);
     } catch (err: any) {
       const msg = err.message || 'Registration failed. Please check your details.';
       setError(msg);

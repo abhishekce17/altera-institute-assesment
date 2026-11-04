@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { X, Lock, Mail, User as UserIcon, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAppStore } from '../../store/useAppStore';
-import { useTasks } from '../../hooks/useTasks';
+import { api } from '../../services/api';
+import { queryClient } from '../../services/queryClient';
 
 interface AuthModalProps {
   isOpen?: boolean;
@@ -20,7 +21,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   subtitle: propSubtitle,
 }) => {
   const { login, register } = useAuth();
-  const { addTask, updateTask, refreshTasks } = useTasks();
   const storeIsOpen = useAppStore((s) => s.isAuthModalOpen);
   const storeSubtitle = useAppStore((s) => s.authModalSubtitle);
   const closeAuthModal = useAppStore((s) => s.closeAuthModal);
@@ -68,9 +68,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         const { formData, isEditing, taskId } = pendingTaskSubmission;
         try {
           if (isEditing && taskId) {
-            await updateTask(taskId, formData);
+            await api.updateTask(taskId, formData);
           } else {
-            await addTask(formData);
+            await api.createTask(formData);
           }
         } catch (err) {
           console.error('[AuthModal] Failed to auto-save pending task post-login:', err);
@@ -80,7 +80,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }
       }
 
-      await refreshTasks();
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['tasks'] }),
+        queryClient.refetchQueries({ queryKey: ['notifications'] }),
+      ]);
       if (onSuccess) onSuccess();
       handleClose();
     } catch (err: any) {

@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAppStore } from '../store/useAppStore';
 
 export function useTasks() {
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
   // Pull active calendar date & showAllTasks filter from Zustand store
@@ -19,19 +19,20 @@ export function useTasks() {
     setShowAllTasks,
   } = useAppStore();
 
+  const userKey = user?._id || 'guest';
+
   // Query tasks from MongoDB Atlas for the authenticated user
   const tasksQuery = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['tasks', userKey],
     queryFn: async (): Promise<Task[]> => {
-      if (!isAuthenticated) return [];
       const data = await api.fetchTasks();
       return data || [];
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && Boolean(user),
     staleTime: 1000 * 30, // 30s fresh
   });
 
-  const tasks = isAuthenticated ? tasksQuery.data || [] : [];
+  const tasks = isAuthenticated && user ? tasksQuery.data || [] : [];
   const isLoading = tasksQuery.isLoading;
   const isOnline = !tasksQuery.isError;
 
@@ -72,7 +73,7 @@ export function useTasks() {
   const addTaskMutation = useMutation({
     mutationFn: (formData: TaskFormData) => api.createTask(formData),
     onSuccess: (savedTask) => {
-      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) => [savedTask, ...prev]);
+      queryClient.setQueryData<Task[]>(['tasks', userKey], (prev = []) => [savedTask, ...prev]);
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
@@ -83,7 +84,7 @@ export function useTasks() {
     mutationFn: ({ id, formData }: { id: string; formData: TaskFormData }) =>
       api.updateTask(id, formData),
     onSuccess: (updatedTask) => {
-      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+      queryClient.setQueryData<Task[]>(['tasks', userKey], (prev = []) =>
         prev.map((t) => (t._id === updatedTask._id ? updatedTask : t))
       );
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -96,10 +97,10 @@ export function useTasks() {
     mutationFn: ({ id, status }: { id: string; status?: 'pending' | 'completed' }) =>
       api.patchTaskStatus(id, status),
     onMutate: async ({ id, status }) => {
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+      await queryClient.cancelQueries({ queryKey: ['tasks', userKey] });
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks', userKey]);
 
-      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+      queryClient.setQueryData<Task[]>(['tasks', userKey], (prev = []) =>
         prev.map((t) => {
           if (t._id !== id) return t;
           const targetStatus = status || (t.status === 'completed' ? 'pending' : 'completed');
@@ -115,7 +116,7 @@ export function useTasks() {
     },
     onError: (_err, _vars, context) => {
       if (context?.previousTasks) {
-        queryClient.setQueryData(['tasks'], context.previousTasks);
+        queryClient.setQueryData(['tasks', userKey], context.previousTasks);
       }
     },
     onSettled: () => {
@@ -128,10 +129,10 @@ export function useTasks() {
   const deleteTaskMutation = useMutation({
     mutationFn: (id: string) => api.deleteTask(id),
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+      await queryClient.cancelQueries({ queryKey: ['tasks', userKey] });
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks', userKey]);
 
-      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+      queryClient.setQueryData<Task[]>(['tasks', userKey], (prev = []) =>
         prev.filter((t) => t._id !== id)
       );
 
@@ -139,7 +140,7 @@ export function useTasks() {
     },
     onError: (_err, _vars, context) => {
       if (context?.previousTasks) {
-        queryClient.setQueryData(['tasks'], context.previousTasks);
+        queryClient.setQueryData(['tasks', userKey], context.previousTasks);
       }
     },
     onSettled: () => {
@@ -167,7 +168,7 @@ export function useTasks() {
   };
 
   const refreshTasks = async () => {
-    await tasksQuery.refetch();
+    await queryClient.refetchQueries({ queryKey: ['tasks'] });
   };
 
   return {

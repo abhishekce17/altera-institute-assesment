@@ -1,6 +1,13 @@
 import axios from 'axios';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
+const TOKEN_STORAGE_KEY = 'todo_jwt_token';
+
+// Read saved token on startup
+const initialToken: string | null =
+  typeof window !== 'undefined' ? localStorage.getItem(TOKEN_STORAGE_KEY) : null;
+
+let inMemoryToken: string | null = initialToken;
 
 export const apiClient = axios.create({
   baseURL: API_BASE,
@@ -9,23 +16,39 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    ...(initialToken ? { Authorization: `Bearer ${initialToken}` } : {}),
   },
 });
 
-let inMemoryToken: string | null = null;
-
 export function setApiToken(token: string | null) {
   inMemoryToken = token;
+  if (typeof window !== 'undefined') {
+    if (token) {
+      localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+    }
+  }
+
+  if (token) {
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete apiClient.defaults.headers.common['Authorization'];
+  }
 }
 
 export function getApiToken(): string | null {
+  if (!inMemoryToken && typeof window !== 'undefined') {
+    inMemoryToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+  }
   return inMemoryToken;
 }
 
-// Request interceptor to attach bearer token if present
+// Request interceptor to attach bearer token to all outgoing requests
 apiClient.interceptors.request.use((config) => {
-  if (inMemoryToken && config.headers) {
-    config.headers.Authorization = `Bearer ${inMemoryToken}`;
+  const token = getApiToken();
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });

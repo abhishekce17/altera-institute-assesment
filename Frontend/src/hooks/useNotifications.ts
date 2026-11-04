@@ -12,35 +12,36 @@ export interface NotificationItem {
 }
 
 export function useNotifications() {
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const userKey = user?._id || 'guest';
 
   const query = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', userKey],
     queryFn: async (): Promise<NotificationItem[]> => {
-      if (!isAuthenticated) return [];
+      if (!isAuthenticated && !user) return [];
       const data = await api.fetchNotifications();
       return (data || []) as NotificationItem[];
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && Boolean(user),
     staleTime: 1000 * 15, // 15 seconds fresh
-    refetchInterval: isAuthenticated ? 15000 : false,
+    refetchInterval: isAuthenticated && Boolean(user) ? 15000 : false,
   });
 
-  const notifications = isAuthenticated ? query.data || [] : [];
+  const notifications = isAuthenticated && user ? query.data || [] : [];
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const clearAllMutation = useMutation({
     mutationFn: () => api.clearNotifications(),
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      const previous = queryClient.getQueryData<NotificationItem[]>(['notifications']);
-      queryClient.setQueryData(['notifications'], []);
+      await queryClient.cancelQueries({ queryKey: ['notifications', userKey] });
+      const previous = queryClient.getQueryData<NotificationItem[]>(['notifications', userKey]);
+      queryClient.setQueryData(['notifications', userKey], []);
       return { previous };
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(['notifications'], context.previous);
+        queryClient.setQueryData(['notifications', userKey], context.previous);
       }
     },
     onSettled: () => {
@@ -51,16 +52,16 @@ export function useNotifications() {
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => api.markNotificationRead(id),
     onMutate: async (id: string) => {
-      await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      const previous = queryClient.getQueryData<NotificationItem[]>(['notifications']);
-      queryClient.setQueryData<NotificationItem[]>(['notifications'], (prev = []) =>
+      await queryClient.cancelQueries({ queryKey: ['notifications', userKey] });
+      const previous = queryClient.getQueryData<NotificationItem[]>(['notifications', userKey]);
+      queryClient.setQueryData<NotificationItem[]>(['notifications', userKey], (prev = []) =>
         prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
       );
       return { previous };
     },
     onError: (_err, _id, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(['notifications'], context.previous);
+        queryClient.setQueryData(['notifications', userKey], context.previous);
       }
     },
     onSettled: () => {
@@ -71,16 +72,16 @@ export function useNotifications() {
   const markAllAsReadMutation = useMutation({
     mutationFn: () => api.markAllNotificationsRead(),
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['notifications'] });
-      const previous = queryClient.getQueryData<NotificationItem[]>(['notifications']);
-      queryClient.setQueryData<NotificationItem[]>(['notifications'], (prev = []) =>
+      await queryClient.cancelQueries({ queryKey: ['notifications', userKey] });
+      const previous = queryClient.getQueryData<NotificationItem[]>(['notifications', userKey]);
+      queryClient.setQueryData<NotificationItem[]>(['notifications', userKey], (prev = []) =>
         prev.map((n) => ({ ...n, isRead: true }))
       );
       return { previous };
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(['notifications'], context.previous);
+        queryClient.setQueryData(['notifications', userKey], context.previous);
       }
     },
     onSettled: () => {

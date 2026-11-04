@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/User.js';
 import { hashPassword, verifyPassword, createToken } from '../utils/authUtils.js';
-import type { AuthRequest } from '../middlewares/auth.js';
+import { type AuthRequest, extractToken } from '../middlewares/auth.js';
 
 const COOKIE_NAME = 'token';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -142,8 +142,11 @@ export async function getMe(req: Request, res: Response, next: NextFunction): Pr
       return;
     }
 
+    const token = extractToken(req);
+
     res.status(200).json({
       success: true,
+      token: token || undefined,
       user: user.toSafeJSON(),
     });
   } catch (error) {

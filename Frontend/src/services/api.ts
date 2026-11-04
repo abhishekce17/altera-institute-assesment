@@ -79,12 +79,15 @@ class ApiService {
   }
 
   /**
-   * Fetch current user profile directly from MongoDB via Cookie session.
+   * Fetch current user profile directly from MongoDB via Cookie session or Bearer token.
    */
   async getProfile(): Promise<User> {
-    const res = await apiClient.get<{ success: boolean; user: User }>('/auth/me');
+    const res = await apiClient.get<{ success: boolean; token?: string; user: User }>('/auth/me');
     if (!res.data.success || !res.data.user) {
       throw new Error('Failed to load user profile from MongoDB');
+    }
+    if (res.data.token) {
+      this.setToken(res.data.token);
     }
     return res.data.user;
   }
