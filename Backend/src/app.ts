@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import taskRoutes from './routes/taskRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import seedRoutes from './routes/seedRoutes.js';
 
 dotenv.config();
 
@@ -64,6 +65,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/seed', seedRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {

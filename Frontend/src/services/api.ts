@@ -232,6 +232,26 @@ class ApiService {
   async markAllNotificationsRead(): Promise<void> {
     await apiClient.patch('/notifications/read-all');
   }
+
+  /**
+   * Seed test invigilator user & tasks across distinct past, today, and future dates in MongoDB Atlas.
+   */
+  async seedInvigilatorData(params?: { email?: string; password?: string; name?: string }): Promise<{
+    success: boolean;
+    credentials: { email: string; password: string };
+    token: string;
+    user: User;
+    stats: any;
+    distinctDates: string[];
+    tasks: Task[];
+  }> {
+    const res = await apiClient.post('/seed', params);
+    const json = res.data;
+    if (json.token) {
+      this.setToken(json.token);
+    }
+    return json;
+  }
 }
 
 export const api = new ApiService();
