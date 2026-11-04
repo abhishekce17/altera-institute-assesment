@@ -1,6 +1,6 @@
 import React from 'react';
 import onboardingBg from '../../assets/onboarding-bg.png';
-import { CheckSquare, Calendar, TrendingUp, Sparkles } from 'lucide-react';
+import { CheckSquare, Calendar, TrendingUp } from 'lucide-react';
 
 interface OnboardingScreenProps {
   onGetStarted: () => void;
@@ -23,12 +23,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
       {/* Information and Call-to-Action: Bottom on mobile, Right half on desktop */}
       <div className="flex-1 flex flex-col justify-between px-7 md:px-12 pt-4 md:py-16 pb-8 bg-white">
         <div className="space-y-6 pt-2 md:pt-8 max-w-md">
-          {/* Desktop App Badge */}
-          <div className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 text-[#3866F2] text-xs font-semibold">
-            <Sparkles className="w-4 h-4" />
-            <span>Task Manager & Weekly Planner</span>
-          </div>
-
           <div className="space-y-3">
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
               Manage What To Do
