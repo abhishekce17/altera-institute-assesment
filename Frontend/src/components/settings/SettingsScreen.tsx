@@ -28,6 +28,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [defaultPriority, setDefaultPriority] = useState<TaskPriority>(
     user?.preferences?.defaultPriority || 'Medium'
   );
@@ -79,6 +80,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
       return;
     }
 
+    if (password.trim()) {
+      if (password.trim().length < 6) {
+        showError('Password must be at least 6 characters long.');
+        return;
+      }
+      if (password.trim() !== confirmPassword.trim()) {
+        showError('Passwords do not match.');
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       await updateProfile({
@@ -92,6 +104,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
       });
 
       setPassword('');
+      setConfirmPassword('');
       showNotice('Profile & preferences saved successfully!');
       if (onRefreshData) {
         onRefreshData();
@@ -244,6 +257,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
                   />
                 </div>
               </div>
+
+              {password.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Confirm New Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Re-enter new password"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 focus:outline-none focus:border-[#3866F2] bg-white"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Section 2: User Preferences */}

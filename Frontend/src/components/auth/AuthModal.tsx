@@ -22,6 +22,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,6 +42,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }
         if (password.length < 6) {
           throw new Error('Password must be at least 6 characters');
+        }
+        if (password !== confirmPassword) {
+          throw new Error('Passwords do not match');
         }
         await register({ name: name.trim(), email: email.trim(), password });
       }
@@ -100,6 +104,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             onClick={() => {
               setMode('login');
               setError(null);
+              setConfirmPassword('');
             }}
             className={`py-2.5 text-xs font-bold text-center border-b-2 transition-colors cursor-pointer ${
               mode === 'login'
@@ -114,6 +119,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             onClick={() => {
               setMode('register');
               setError(null);
+              setConfirmPassword('');
             }}
             className={`py-2.5 text-xs font-bold text-center border-b-2 transition-colors cursor-pointer ${
               mode === 'register'
@@ -181,6 +187,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 />
               </div>
             </div>
+
+            {mode === 'register' && (
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Confirm Password</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter password"
+                    className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 focus:outline-none focus:border-[#3866F2] bg-slate-50/50"
+                  />
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
