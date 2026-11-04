@@ -9,7 +9,6 @@ import {
   LogOut,
   LogIn,
   AlertCircle,
-  Database,
   Bell,
   ShieldCheck,
 } from 'lucide-react';
@@ -93,12 +92,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
       });
 
       setPassword('');
-      showNotice('Profile & preferences saved directly to MongoDB!');
+      showNotice('Profile & preferences saved successfully!');
       if (onRefreshData) {
         onRefreshData();
       }
     } catch (err: any) {
-      showError(err.message || 'Failed to save changes to MongoDB.');
+      showError(err.message || 'Failed to save changes.');
     } finally {
       setIsSaving(false);
     }
@@ -126,7 +125,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
             <button
               type="button"
               onClick={logout}
-              className="px-3 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+              className="h-9 px-3 border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
@@ -135,10 +134,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
             <button
               type="button"
               onClick={() => setIsAuthModalOpen(true)}
-              className="px-3 py-1.5 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+              className="h-9 px-3.5 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <LogIn className="w-3.5 h-3.5" />
-              <span>Sign In / Sign Up</span>
+              <span>Sign In</span>
             </button>
           )}
         </div>
@@ -159,199 +158,174 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
           </div>
         )}
 
-        {/* User Account Banner */}
-        <div className="border border-slate-200 p-5 mb-6 bg-slate-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 bg-[#3866F2] text-white flex items-center justify-center font-bold text-base">
-              {user?.name ? user.name.slice(0, 2).toUpperCase() : 'TD'}
+        {!isAuthenticated ? (
+          <div className="border border-slate-200 p-8 text-center bg-slate-50/50 my-auto">
+            <div className="w-12 h-12 bg-[#3866F2] text-white flex items-center justify-center mx-auto mb-3 font-bold text-base">
+              <LogIn className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-slate-900">
-                  {isAuthenticated ? user?.name : 'Guest User'}
-                </h2>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-[#3866F2]">
-                  <Database className="w-2.5 h-2.5" />
-                  MongoDB User
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                {isAuthenticated ? user?.email : 'Sign in to sync your tasks and preferences to MongoDB'}
-              </p>
-            </div>
-          </div>
-
-          {!isAuthenticated && (
+            <h2 className="text-sm font-bold text-slate-900 mb-1">Sign In Required</h2>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mb-5">
+              Please sign in or create an account to view and update your profile details and task preferences.
+            </p>
             <button
               type="button"
               onClick={() => setIsAuthModalOpen(true)}
-              className="py-2 px-4 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer"
+              className="py-2.5 px-6 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-2"
             >
-              Log In to Save Profile
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In / Create Account</span>
             </button>
-          )}
-        </div>
-
-        {/* Main Settings Form */}
-        <form onSubmit={handleSaveToMongoDB} className="space-y-6">
-          {/* Section 1: User Profile Details (Persisted in MongoDB) */}
-          <div className="border border-slate-200 p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  User Profile (MongoDB)
-                </h3>
-                <p className="text-[11px] text-slate-500">
-                  Manage your name, email, and authentication details.
-                </p>
-              </div>
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    required
-                    disabled={!isAuthenticated}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Alex Johnson"
-                    className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 focus:outline-none focus:border-[#3866F2] bg-white disabled:bg-slate-100 disabled:text-slate-400"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    required
-                    disabled={!isAuthenticated}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 focus:outline-none focus:border-[#3866F2] bg-white disabled:bg-slate-100 disabled:text-slate-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Update Password (Optional)
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="password"
-                  disabled={!isAuthenticated}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Leave empty to keep existing password"
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 focus:outline-none focus:border-[#3866F2] bg-white disabled:bg-slate-100 disabled:text-slate-400"
-                />
-              </div>
-              <span className="block text-[10px] text-slate-400 mt-1">
-                Encrypted with native scrypt & stored in MongoDB.
-              </span>
-            </div>
           </div>
-
-          {/* Section 2: User Preferences (Stored in MongoDB User Document) */}
-          <div className="border border-slate-200 p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  User Preferences (MongoDB Document)
-                </h3>
-                <p className="text-[11px] text-slate-500">
-                  Custom defaults saved directly to your MongoDB account.
-                </p>
+        ) : (
+          /* Main Settings Form for Authenticated User */
+          <form onSubmit={handleSaveToMongoDB} className="space-y-6">
+            {/* Section 1: User Profile Details */}
+            <div className="border border-slate-200 p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    User Profile
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Manage your name, email, and authentication credentials.
+                  </p>
+                </div>
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
               </div>
-              <Bell className="w-4 h-4 text-slate-500" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. Alex Johnson"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 focus:outline-none focus:border-[#3866F2] bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 focus:outline-none focus:border-[#3866F2] bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Update Password (Optional)
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Leave empty to keep existing password"
+                    className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 focus:outline-none focus:border-[#3866F2] bg-white"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Default Priority Setting */}
+            {/* Section 2: User Preferences */}
+            <div className="border border-slate-200 p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    Task Preferences
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Custom defaults saved to your account.
+                  </p>
+                </div>
+                <Bell className="w-4 h-4 text-slate-500" />
+              </div>
+
+              {/* Default Priority Setting */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-2">
+                  Default Priority for New Tasks
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['Low', 'Medium', 'High'] as TaskPriority[]).map((p) => {
+                    const isSelected = defaultPriority === p;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setDefaultPriority(p)}
+                        className={`py-2 px-3 text-xs font-bold border transition-colors cursor-pointer text-center ${
+                          isSelected
+                            ? 'bg-[#3866F2] text-white border-[#3866F2]'
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="block text-[11px] text-slate-400 mt-1.5">
+                  New tasks created will automatically default to this priority level.
+                </span>
+              </div>
+
+              {/* Notification Reminders Toggle */}
+              <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+                <div>
+                  <span className="block text-xs font-bold text-slate-800">
+                    Task Reminders & Notifications
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Track schedule deadlines and weekly completion progress
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setNotificationEnabled(!notificationEnabled)}
+                  className={`px-3 py-1.5 text-xs font-bold border transition-colors cursor-pointer ${
+                    notificationEnabled
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                      : 'bg-slate-100 text-slate-500 border-slate-300'
+                  }`}
+                >
+                  {notificationEnabled ? 'Enabled' : 'Disabled'}
+                </button>
+              </div>
+            </div>
+
+            {/* Save Button */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2">
-                Default Priority for New Tasks
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['Low', 'Medium', 'High'] as TaskPriority[]).map((p) => {
-                  const isSelected = defaultPriority === p;
-                  return (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setDefaultPriority(p)}
-                      className={`py-2 px-3 text-xs font-bold border transition-colors cursor-pointer text-center ${
-                        isSelected
-                          ? 'bg-[#3866F2] text-white border-[#3866F2]'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  );
-                })}
-              </div>
-              <span className="block text-[11px] text-slate-400 mt-1.5">
-                New tasks created will automatically default to this priority level.
-              </span>
-            </div>
-
-            {/* Notification Reminders Toggle */}
-            <div className="pt-2 flex items-center justify-between border-t border-slate-100">
-              <div>
-                <span className="block text-xs font-bold text-slate-800">
-                  Task Reminders & Notifications
-                </span>
-                <span className="text-[11px] text-slate-400">
-                  Track schedule deadlines and weekly completion progress
-                </span>
-              </div>
               <button
-                type="button"
-                onClick={() => setNotificationEnabled(!notificationEnabled)}
-                className={`px-3 py-1.5 text-xs font-bold border transition-colors cursor-pointer ${
-                  notificationEnabled
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                    : 'bg-slate-100 text-slate-500 border-slate-300'
-                }`}
+                type="submit"
+                disabled={isSaving}
+                className="py-3 px-6 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {notificationEnabled ? 'Enabled' : 'Disabled'}
+                <Save className="w-4 h-4" />
+                <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
               </button>
             </div>
-          </div>
-
-          {/* Save Button */}
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="w-full sm:w-auto py-3 px-6 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" />
-              <span>{isSaving ? 'Saving to MongoDB...' : 'Save Changes to MongoDB'}</span>
-            </button>
-
-            {!isAuthenticated && (
-              <span className="text-xs text-amber-600 font-semibold">
-                * Please sign in or register to persist profile changes to MongoDB.
-              </span>
-            )}
-          </div>
-        </form>
+          </form>
+        )}
       </div>
 
       {/* Auth Modal for Login/Signup */}
@@ -361,7 +335,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
         onSuccess={() => {
           refreshProfile();
           if (onRefreshData) onRefreshData();
-          showNotice('Signed in successfully! Synced with MongoDB.');
+          showNotice('Signed in successfully!');
         }}
       />
     </div>

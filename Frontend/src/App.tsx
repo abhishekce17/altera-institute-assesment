@@ -6,6 +6,7 @@ import { SearchScreen } from './components/search/SearchScreen';
 import { NotificationScreen } from './components/notifications/NotificationScreen';
 import { SettingsScreen } from './components/settings/SettingsScreen';
 import { TaskModal, type TaskFormData } from './components/tasks/TaskModal';
+import { AuthModal } from './components/auth/AuthModal';
 import { useTasks } from './hooks/useTasks';
 import { useAuth } from './context/AuthContext';
 import type { Task } from './types/task';
@@ -13,7 +14,7 @@ import type { Task } from './types/task';
 type Screen = 'onboarding' | 'home' | 'search' | 'notifications' | 'settings';
 
 export function App() {
-  const { user, updateProfile } = useAuth();
+  const { user, isAuthenticated, updateProfile } = useAuth();
 
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     if (typeof window !== 'undefined') {
@@ -51,12 +52,12 @@ export function App() {
     refreshTasks,
   } = useTasks();
 
-  // Fetch data whenever user arrives at the Home screen
+  // Fetch data whenever user arrives at the Home screen or logs in
   useEffect(() => {
     if (currentScreen === 'home') {
       refreshTasks();
     }
-  }, [currentScreen, refreshTasks]);
+  }, [currentScreen, refreshTasks, isAuthenticated]);
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -66,6 +67,8 @@ export function App() {
     return false;
   });
 
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [pendingOpenTaskModal, setPendingOpenTaskModal] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const handleGetStarted = () => {
@@ -78,12 +81,22 @@ export function App() {
     setCurrentScreen('home');
   };
 
+  // When user clicks Create / Add Task, ask for login if not signed in!
   const handleOpenAddTask = () => {
+    if (!isAuthenticated) {
+      setPendingOpenTaskModal(true);
+      setIsAuthModalOpen(true);
+      return;
+    }
     setEditingTask(null);
     setIsModalOpen(true);
   };
 
   const handleOpenEditTask = (task: Task) => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     setEditingTask(task);
     setIsModalOpen(true);
   };
@@ -148,6 +161,23 @@ export function App() {
         onSubmit={handleModalSubmit}
         initialTask={editingTask}
         defaultDate={selectedDate}
+      />
+
+      {/* Authentication Modal triggered on Create Task or Account access */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setPendingOpenTaskModal(false);
+        }}
+        onSuccess={() => {
+          refreshTasks();
+          if (pendingOpenTaskModal) {
+            setEditingTask(null);
+            setIsModalOpen(true);
+            setPendingOpenTaskModal(false);
+          }
+        }}
       />
     </MobileContainer>
   );
