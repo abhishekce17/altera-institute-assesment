@@ -296,6 +296,57 @@ class ApiService {
       throw new Error(err.error || `HTTP ${res.status}`);
     }
   }
+
+  /**
+   * Fetch real notifications for the authenticated user from MongoDB Atlas.
+   */
+  async fetchNotifications(): Promise<Array<{
+    _id: string;
+    title: string;
+    message: string;
+    type: 'reminder' | 'progress' | 'task_created' | 'task_completed';
+    isRead: boolean;
+    createdAt: string;
+  }>> {
+    const res = await fetch(`${this.base}/notifications`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+      credentials: 'include',
+    });
+
+    if (!res.ok) {
+      return [];
+    }
+
+    const json = await res.json();
+    return json.data || [];
+  }
+
+  /**
+   * Delete all notifications for the authenticated user from MongoDB Atlas.
+   */
+  async clearNotifications(): Promise<void> {
+    const res = await fetch(`${this.base}/notifications`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+      credentials: 'include',
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to clear notifications: HTTP ${res.status}`);
+    }
+  }
+
+  /**
+   * Mark a single notification as read in MongoDB Atlas.
+   */
+  async markNotificationRead(id: string): Promise<void> {
+    await fetch(`${this.base}/notifications/${id}/read`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      credentials: 'include',
+    });
+  }
 }
 
 export const api = new ApiService(API_BASE);

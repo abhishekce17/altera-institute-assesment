@@ -170,7 +170,6 @@ export function App() {
           path="/notifications"
           element={
             <NotificationScreen
-              tasks={tasks}
               onBack={() => navigate('/home')}
             />
           }

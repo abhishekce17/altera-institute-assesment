@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { Task } from '../models/Task.js';
+import { Notification } from '../models/Notification.js';
 import { getTodayString, getWeekEnd, getWeekStart } from '../utils/dateUtils.js';
 import type { AuthRequest } from '../middlewares/auth.js';
 
@@ -184,6 +185,16 @@ export async function createTask(req: Request, res: Response, next: NextFunction
 
     const savedTask = await task.save();
 
+    // Persist real notification to MongoDB Atlas if user has notifications enabled
+    if (user.preferences?.notificationEnabled !== false) {
+      await Notification.create({
+        userId: user._id,
+        title: 'Task Created',
+        message: `"${savedTask.title}" scheduled for ${savedTask.date} at ${savedTask.startTime}`,
+        type: 'task_created',
+      }).catch((err) => console.warn('[Notification Error]', err));
+    }
+
     res.status(201).json({
       success: true,
       message: 'Task created successfully in MongoDB',
@@ -270,6 +281,15 @@ export async function patchTaskStatus(req: Request, res: Response, next: NextFun
     const newStatus = req.body?.status || (task.status === 'completed' ? 'pending' : 'completed');
     task.status = newStatus;
     await task.save();
+
+    if (newStatus === 'completed' && user.preferences?.notificationEnabled !== false) {
+      await Notification.create({
+        userId: user._id,
+        title: 'Task Completed',
+        message: `Marked "${task.title}" as completed`,
+        type: 'task_completed',
+      }).catch((err) => console.warn('[Notification Error]', err));
+    }
 
     res.status(200).json({
       success: true,
