@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Clock, Calendar, AlertCircle } from 'lucide-react';
 import type { Task, TaskPriority } from '../../types/task';
 import { formatDisplayDate, getTodayISO } from '../../utils/date';
+import { useAuth } from '../../context/AuthContext';
 
 export interface TaskFormData {
   title: string;
@@ -41,7 +42,9 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   const [date, setDate] = useState<string>(initialTask ? initialTask.date : defaultDate || today);
   const [startTime, setStartTime] = useState<string>(initialTask ? initialTask.startTime : '09:00 AM');
   const [endTime, setEndTime] = useState<string>(initialTask ? initialTask.endTime : '10:30 AM');
-  const [priority, setPriority] = useState<TaskPriority>(initialTask ? initialTask.priority : 'Medium');
+  const { user } = useAuth();
+  const defaultPriority = user?.preferences?.defaultPriority || 'Medium';
+  const [priority, setPriority] = useState<TaskPriority>(initialTask ? initialTask.priority : defaultPriority);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {

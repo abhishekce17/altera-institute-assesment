@@ -1,14 +1,55 @@
 import type { Task, WeeklyStats } from '../types/task';
 import type { TaskFormData } from '../components/tasks/TaskModal';
+import type { User, AuthResponse } from '../types/auth';
 
 // Configurable base URL: uses VITE_API_BASE_URL if defined, otherwise defaults to /api (handled by Vite proxy in dev)
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
+const TOKEN_KEY = 'todo_app_auth_token';
 
 class ApiService {
   private base: string;
+  private token: string | null = null;
 
   constructor(baseUrl: string) {
     this.base = baseUrl;
+    // Load stored session token if available
+    try {
+      this.token = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
+    } catch {
+      this.token = null;
+    }
+  }
+
+  setToken(token: string | null, persist = true) {
+    this.token = token;
+    try {
+      if (token) {
+        if (persist) {
+          localStorage.setItem(TOKEN_KEY, token);
+        }
+        sessionStorage.setItem(TOKEN_KEY, token);
+      } else {
+        localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
+      }
+    } catch {
+      // Ignore storage errors in restricted iframe environments
+    }
+  }
+
+  getToken(): string | null {
+    return this.token;
+  }
+
+  private getHeaders(customHeaders: Record<string, string> = {}): Record<string, string> {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      ...customHeaders,
+    };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    return headers;
   }
 
   /**
@@ -18,14 +59,101 @@ class ApiService {
     try {
       const res = await fetch(`${this.base}/health`, {
         method: 'GET',
-        headers: { Accept: 'application/json' },
-        signal: AbortSignal.timeout(3000), // 3s timeout
+        headers: this.getHeaders(),
+        signal: AbortSignal.timeout(3000),
       });
       return res.ok;
     } catch {
       return false;
     }
   }
+
+  // ==================== AUTHENTICATION & USER PROFILE ====================
+
+  /**
+   * Register a new user account in MongoDB.
+   */
+  async register(data: {
+    name: string;
+    email: string;
+    password: string;
+    preferences?: { defaultPriority?: string; notificationEnabled?: boolean };
+  }): Promise<{ token: string; user: User }> {
+    const res = await fetch(`${this.base}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    const json: AuthResponse = await res.json().catch(() => ({ success: false, error: 'Registration failed' }));
+    if (!res.ok || !json.success || !json.token || !json.user) {
+      throw new Error(json.error || 'Failed to create account');
+    }
+
+    this.setToken(json.token);
+    return { token: json.token, user: json.user };
+  }
+
+  /**
+   * Log in to an existing MongoDB user account.
+   */
+  async login(data: { email: string; password: string }): Promise<{ token: string; user: User }> {
+    const res = await fetch(`${this.base}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    const json: AuthResponse = await res.json().catch(() => ({ success: false, error: 'Login request failed' }));
+    if (!res.ok || !json.success || !json.token || !json.user) {
+      throw new Error(json.error || 'Invalid email or password');
+    }
+
+    this.setToken(json.token);
+    return { token: json.token, user: json.user };
+  }
+
+  /**
+   * Fetch current user profile and preferences directly from MongoDB.
+   */
+  async getProfile(): Promise<User> {
+    const res = await fetch(`${this.base}/auth/me`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+
+    const json = await res.json().catch(() => ({ success: false, error: 'Failed to fetch user profile' }));
+    if (!res.ok || !json.success || !json.user) {
+      throw new Error(json.error || 'Failed to load user profile from MongoDB');
+    }
+
+    return json.user;
+  }
+
+  /**
+   * Update user details and preferences in MongoDB.
+   */
+  async updateProfile(data: {
+    name?: string;
+    email?: string;
+    password?: string;
+    preferences?: { defaultPriority?: string; notificationEnabled?: boolean };
+  }): Promise<User> {
+    const res = await fetch(`${this.base}/auth/profile`, {
+      method: 'PUT',
+      headers: this.getHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(data),
+    });
+
+    const json = await res.json().catch(() => ({ success: false, error: 'Failed to update user profile' }));
+    if (!res.ok || !json.success || !json.user) {
+      throw new Error(json.error || 'Failed to update profile in MongoDB');
+    }
+
+    return json.user;
+  }
+
+  // ==================== TASK OPERATIONS (MONGODB) ====================
 
   /**
    * Fetch tasks with optional filters (date, weekStart, status, search).
@@ -46,7 +174,7 @@ class ApiService {
 
     const res = await fetch(url.toString(), {
       method: 'GET',
-      headers: { Accept: 'application/json' },
+      headers: this.getHeaders(),
     });
 
     if (!res.ok) {
@@ -70,7 +198,7 @@ class ApiService {
 
     const res = await fetch(url.toString(), {
       method: 'GET',
-      headers: { Accept: 'application/json' },
+      headers: this.getHeaders(),
     });
 
     if (!res.ok) {
@@ -83,15 +211,12 @@ class ApiService {
   }
 
   /**
-   * Create a new task.
+   * Create a new task in MongoDB.
    */
   async createTask(data: TaskFormData): Promise<Task> {
     const res = await fetch(`${this.base}/tasks`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      headers: this.getHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     });
 
@@ -105,15 +230,12 @@ class ApiService {
   }
 
   /**
-   * Update an existing task.
+   * Update an existing task in MongoDB.
    */
   async updateTask(id: string, data: TaskFormData): Promise<Task> {
     const res = await fetch(`${this.base}/tasks/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      headers: this.getHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     });
 
@@ -127,15 +249,12 @@ class ApiService {
   }
 
   /**
-   * Toggle task status between pending and completed.
+   * Toggle task status between pending and completed in MongoDB.
    */
   async toggleTaskStatus(id: string, status?: 'pending' | 'completed'): Promise<Task> {
     const res = await fetch(`${this.base}/tasks/${id}/status`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      headers: this.getHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(status ? { status } : {}),
     });
 
@@ -149,12 +268,12 @@ class ApiService {
   }
 
   /**
-   * Delete a task by ID.
+   * Delete a task by ID from MongoDB.
    */
   async deleteTask(id: string): Promise<void> {
     const res = await fetch(`${this.base}/tasks/${id}`, {
       method: 'DELETE',
-      headers: { Accept: 'application/json' },
+      headers: this.getHeaders(),
     });
 
     if (!res.ok) {
@@ -165,4 +284,3 @@ class ApiService {
 }
 
 export const api = new ApiService(API_BASE);
-

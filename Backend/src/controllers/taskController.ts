@@ -2,16 +2,24 @@ import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { Task } from '../models/Task.js';
 import { getTodayString, getWeekEnd, getWeekStart } from '../utils/dateUtils.js';
+import type { AuthRequest } from '../middlewares/auth.js';
 
 /**
  * GET /api/tasks
  * Filter tasks by date, weekStart, status, or search keywords.
+ * Scoped to the authenticated user if logged in.
  */
 export async function getTasks(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const user = (req as AuthRequest).user;
     const { date, weekStart, status, search } = req.query;
 
     const filter: Record<string, any> = {};
+
+    // Filter by user if authenticated
+    if (user) {
+      filter.userId = user._id;
+    }
 
     if (date && typeof date === 'string') {
       filter.date = date;
@@ -49,9 +57,11 @@ export async function getTasks(req: Request, res: Response, next: NextFunction):
 /**
  * GET /api/tasks/stats/weekly
  * Returns open tasks count, completed tasks count, and progress percentage for a week.
+ * Scoped to authenticated user if logged in.
  */
 export async function getWeeklyStats(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const user = (req as AuthRequest).user;
     const { date, weekStart } = req.query;
 
     let targetWeekStart: string;
@@ -66,8 +76,13 @@ export async function getWeeklyStats(req: Request, res: Response, next: NextFunc
 
     const targetWeekEnd = getWeekEnd(targetWeekStart);
 
+    const matchQuery: Record<string, any> = { weekStart: targetWeekStart };
+    if (user) {
+      matchQuery.userId = user._id;
+    }
+
     const stats = await Task.aggregate([
-      { $match: { weekStart: targetWeekStart } },
+      { $match: matchQuery },
       {
         $group: {
           _id: '$status',
@@ -129,9 +144,11 @@ export async function getTaskById(req: Request, res: Response, next: NextFunctio
  */
 export async function createTask(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const user = (req as AuthRequest).user;
     const { title, description, date, startTime, endTime, priority, status } = req.body;
 
     const task = new Task({
+      userId: user ? user._id : undefined,
       title,
       description,
       date,
@@ -146,7 +163,7 @@ export async function createTask(req: Request, res: Response, next: NextFunction
 
     res.status(201).json({
       success: true,
-      message: 'Task created successfully',
+      message: 'Task created successfully in MongoDB',
       data: savedTask,
     });
   } catch (error) {
@@ -183,7 +200,7 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
 
     res.status(200).json({
       success: true,
-      message: 'Task updated successfully',
+      message: 'Task updated successfully in MongoDB',
       data: updatedTask,
     });
   } catch (error) {
@@ -210,14 +227,13 @@ export async function patchTaskStatus(req: Request, res: Response, next: NextFun
       return;
     }
 
-    // Toggle if no status is specified in body, otherwise assign specified status
     const newStatus = req.body?.status || (task.status === 'completed' ? 'pending' : 'completed');
     task.status = newStatus;
     await task.save();
 
     res.status(200).json({
       success: true,
-      message: `Task marked as ${newStatus}`,
+      message: `Task marked as ${newStatus} in MongoDB`,
       data: task,
     });
   } catch (error) {
@@ -245,7 +261,7 @@ export async function deleteTask(req: Request, res: Response, next: NextFunction
 
     res.status(200).json({
       success: true,
-      message: 'Task deleted successfully',
+      message: 'Task deleted successfully from MongoDB',
       data: { id },
     });
   } catch (error) {

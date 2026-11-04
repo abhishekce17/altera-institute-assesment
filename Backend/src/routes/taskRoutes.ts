@@ -9,6 +9,7 @@ import {
   updateTask,
 } from '../controllers/taskController.js';
 import { validateBody, validateQuery } from '../middlewares/validate.js';
+import { optionalAuth } from '../middlewares/auth.js';
 import {
   createTaskSchema,
   patchStatusSchema,
@@ -17,6 +18,9 @@ import {
 } from '../validations/taskValidation.js';
 
 const router = Router();
+
+// Apply optionalAuth to all task routes to scope queries and creations to authenticated user
+router.use(optionalAuth);
 
 // Stats route (must be defined before /:id)
 router.get('/stats/weekly', getWeeklyStats);
@@ -32,4 +36,3 @@ router.patch('/:id/status', validateBody(patchStatusSchema.partial()), patchTask
 router.delete('/:id', deleteTask);
 
 export default router;
-

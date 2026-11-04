@@ -5,6 +5,7 @@ export type TaskPriority = 'Low' | 'Medium' | 'High';
 export type TaskStatus = 'pending' | 'completed';
 
 export interface ITask extends Document {
+  userId?: mongoose.Types.ObjectId;
   title: string;
   description?: string;
   date: string; // YYYY-MM-DD
@@ -19,6 +20,12 @@ export interface ITask extends Document {
 
 const TaskSchema = new Schema<ITask>(
   {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      index: true,
+      default: null,
+    },
     title: {
       type: String,
       required: [true, 'Task title is mandatory'],
@@ -85,6 +92,8 @@ TaskSchema.pre('validate', function (next) {
 // Indexes for high performance
 TaskSchema.index({ date: 1 });
 TaskSchema.index({ weekStart: 1, status: 1 });
+TaskSchema.index({ userId: 1, date: 1 });
+TaskSchema.index({ userId: 1, weekStart: 1, status: 1 });
 TaskSchema.index({ title: 'text', description: 'text' });
 
 export const Task = mongoose.model<ITask>('Task', TaskSchema);

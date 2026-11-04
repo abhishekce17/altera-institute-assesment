@@ -37,7 +37,6 @@ export function App() {
     toggleTaskStatus,
     deleteTask,
     refreshTasks,
-    resetTasks,
   } = useTasks();
 
   // Fetch data whenever user arrives at the Home screen
@@ -140,7 +139,6 @@ export function App() {
         <SettingsScreen
           onBack={() => setCurrentScreen('home')}
           onRefreshData={refreshTasks}
-          onResetData={resetTasks}
         />
       )}
 

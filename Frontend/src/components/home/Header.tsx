@@ -1,5 +1,7 @@
-import React from 'react';
-import { Search, Settings, Bell, Plus, CheckSquare } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Settings, Bell, Plus, CheckSquare, LogIn, User as UserIcon } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { AuthModal } from '../auth/AuthModal';
 
 interface HeaderProps {
   onSearchClick: () => void;
@@ -14,18 +16,25 @@ export const Header: React.FC<HeaderProps> = ({
   onSettingsClick,
   onNotificationClick,
 }) => {
+  const { user, isAuthenticated, refreshProfile } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   return (
     <header className="px-5 md:px-8 pt-4 md:pt-6 pb-2 md:pb-4 border-b border-slate-100 bg-white">
       {/* Desktop Top Bar (hidden on mobile) */}
       <div className="hidden md:flex items-center justify-between gap-4">
-        {/* Brand / Logo */}
+        {/* Brand / Logo & User Greeting */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#3866F2] flex items-center justify-center text-white">
-            <CheckSquare className="w-5 h-5 stroke-[2.2]" />
+          <div className="w-10 h-10 bg-[#3866F2] flex items-center justify-center text-white font-bold text-sm">
+            {isAuthenticated && user?.name ? user.name.slice(0, 2).toUpperCase() : <CheckSquare className="w-5 h-5 stroke-[2.2]" />}
           </div>
           <div>
-            <h1 className="text-lg font-bold text-slate-900 leading-tight">My Tasks</h1>
-            <p className="text-xs text-slate-400">Weekly Planner & To-Do</p>
+            <h1 className="text-lg font-bold text-slate-900 leading-tight">
+              {isAuthenticated && user?.name ? `Hello, ${user.name}` : 'My Tasks'}
+            </h1>
+            <p className="text-xs text-slate-400">
+              {isAuthenticated && user?.email ? user.email : 'Weekly Planner & To-Do'}
+            </p>
           </div>
         </div>
 
@@ -46,8 +55,28 @@ export const Header: React.FC<HeaderProps> = ({
           <Search className="w-4 h-4 text-slate-500" />
         </div>
 
-        {/* Right action controls + Desktop Add Button */}
+        {/* Right action controls */}
         <div className="flex items-center gap-2">
+          {isAuthenticated ? (
+            <button
+              type="button"
+              onClick={onSettingsClick}
+              className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <UserIcon className="w-3.5 h-3.5 text-[#3866F2]" />
+              <span className="max-w-[120px] truncate">{user?.name}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="px-3 py-1.5 bg-[#3866F2] hover:bg-[#2b54d6] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          )}
+
           {onAddTaskClick && (
             <button
               type="button"
@@ -92,9 +121,25 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Settings className="w-5 h-5 stroke-[1.8]" />
             </button>
+            {isAuthenticated && user && (
+              <span className="text-xs font-bold text-slate-800 truncate max-w-[150px]">
+                {user.name}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1">
+            {!isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(true)}
+                className="px-2.5 py-1 text-xs font-bold text-[#3866F2] hover:bg-blue-50 transition-colors cursor-pointer flex items-center gap-1"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={onNotificationClick}
@@ -124,6 +169,15 @@ export const Header: React.FC<HeaderProps> = ({
           <Search className="w-4 h-4 text-slate-500" />
         </div>
       </div>
+
+      {/* Auth Modal for Quick Login / Sign Up */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          refreshProfile();
+        }}
+      />
     </header>
   );
 };

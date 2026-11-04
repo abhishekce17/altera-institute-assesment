@@ -152,3 +152,4 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
     </div>
   );
 };
+
