@@ -10,6 +10,9 @@ import {
 } from '../../utils/date';
 import { useAuth } from '../../context/AuthContext';
 
+import { useAppStore } from '../../store/useAppStore';
+import { useTasks } from '../../hooks/useTasks';
+
 export interface TaskFormData {
   title: string;
   description: string;
@@ -20,9 +23,9 @@ export interface TaskFormData {
 }
 
 interface TaskModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: TaskFormData) => boolean | Promise<boolean> | void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onSubmit?: (data: TaskFormData) => boolean | Promise<boolean> | void;
   initialTask?: Task | null;
   initialFormData?: TaskFormData | null;
   defaultDate?: string;
@@ -347,21 +350,50 @@ const TaskModalContent: React.FC<TaskModalContentProps> = ({
   );
 };
 
-export const TaskModal: React.FC<TaskModalProps> = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  initialTask,
-  initialFormData,
-  defaultDate,
-}) => {
+export const TaskModal: React.FC<TaskModalProps> = (props) => {
+  const { isAuthenticated } = useAuth();
+  const { addTask, updateTask } = useTasks();
+  const storeIsOpen = useAppStore((s) => s.isTaskModalOpen);
+  const storeEditingTask = useAppStore((s) => s.editingTask);
+  const storePending = useAppStore((s) => s.pendingTaskSubmission);
+  const storeSelectedDate = useAppStore((s) => s.selectedDate);
+  const closeTaskModal = useAppStore((s) => s.closeTaskModal);
+  const setPendingTaskSubmission = useAppStore((s) => s.setPendingTaskSubmission);
+  const openAuthModal = useAppStore((s) => s.openAuthModal);
+
+  const isOpen = props.isOpen ?? storeIsOpen;
   if (!isOpen) return null;
+
+  const editingTask = props.initialTask !== undefined ? props.initialTask : storeEditingTask;
+  const initialFormData = props.initialFormData !== undefined ? props.initialFormData : storePending?.formData;
+  const defaultDate = props.defaultDate ?? storeSelectedDate;
+  const onClose = props.onClose ?? closeTaskModal;
+
+  const handleSubmit = props.onSubmit || (async (formData: TaskFormData): Promise<boolean> => {
+    if (!isAuthenticated) {
+      setPendingTaskSubmission({
+        formData,
+        isEditing: Boolean(editingTask),
+        taskId: editingTask?._id,
+      });
+      openAuthModal('Sign in or create an account to save and create your task');
+      return false;
+    }
+
+    if (editingTask) {
+      await updateTask(editingTask._id, formData);
+    } else {
+      await addTask(formData);
+    }
+    closeTaskModal();
+    return true;
+  });
 
   return (
     <TaskModalContent
       onClose={onClose}
-      onSubmit={onSubmit}
-      initialTask={initialTask}
+      onSubmit={handleSubmit}
+      initialTask={editingTask}
       initialFormData={initialFormData}
       defaultDate={defaultDate}
     />

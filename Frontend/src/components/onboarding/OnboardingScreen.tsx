@@ -1,12 +1,23 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import onboardingBg from '../../assets/onboarding-bg.png';
 import { CheckSquare, Calendar, TrendingUp } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface OnboardingScreenProps {
-  onGetStarted: () => void;
+  onGetStarted?: () => void;
 }
 
 export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted }) => {
+  const navigate = useNavigate();
+  const { user, updateProfile } = useAuth();
+
+  const handleGetStarted = onGetStarted || (() => {
+    if (user) {
+      updateProfile({ hasOnboarded: true }).catch(() => {});
+    }
+    navigate('/home');
+  });
   return (
     <div className="flex-1 flex flex-col md:flex-row bg-white h-full min-h-screen md:min-h-[850px] overflow-hidden">
       {/* Hero graphic section: Top on mobile, Left half on desktop */}
@@ -68,7 +79,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
         <div className="pt-6 md:pt-8 max-w-md">
           <button
             type="button"
-            onClick={onGetStarted}
+            onClick={handleGetStarted}
             className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-base transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
           >
             Get Started

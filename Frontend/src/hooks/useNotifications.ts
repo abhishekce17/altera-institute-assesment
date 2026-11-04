@@ -56,3 +56,4 @@ export function useNotifications() {
     refetch: query.refetch,
   };
 }
+

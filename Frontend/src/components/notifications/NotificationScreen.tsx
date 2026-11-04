@@ -1,12 +1,15 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, CheckCircle2, Clock, Trash2, CalendarCheck } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 
 interface NotificationScreenProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
+  const navigate = useNavigate();
+  const handleBack = onBack || (() => navigate('/home'));
   const { notifications, isLoading, clearAll, isClearing } = useNotifications();
 
   const handleClearAll = async () => {
@@ -35,7 +38,7 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={onBack}
+              onClick={handleBack}
               aria-label="Back to home"
               className="p-2 -ml-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1.5"
             >

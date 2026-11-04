@@ -1,22 +1,30 @@
 import React from 'react';
 import type { DayItem } from '../../types/task';
+import { useAppStore } from '../../store/useAppStore';
+import { getWeekDays } from '../../utils/date';
 
 interface DateStripProps {
-  days: DayItem[];
-  onSelectDate: (dateString: string) => void;
+  days?: DayItem[];
+  onSelectDate?: (dateString: string) => void;
 }
 
 export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
+  const selectedDate = useAppStore((state) => state.selectedDate);
+  const setSelectedDate = useAppStore((state) => state.setSelectedDate);
+
+  const activeDays = days || getWeekDays(selectedDate, selectedDate);
+  const handleSelectDate = onSelectDate || setSelectedDate;
+
   return (
     <div className="px-4 md:px-0 py-2">
       <div className="flex items-center justify-between gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-1">
-        {days.map((day) => {
+        {activeDays.map((day) => {
           const isSelected = day.isSelected;
           return (
             <button
               key={day.dateString}
               type="button"
-              onClick={() => onSelectDate(day.dateString)}
+              onClick={() => handleSelectDate(day.dateString)}
               className={`flex-1 min-w-[42px] max-w-[48px] md:max-w-none py-2.5 md:py-3 px-1 md:px-2 flex flex-col items-center justify-center transition-all cursor-pointer ${
                 isSelected
                   ? 'bg-[#3866F2] text-white scale-[1.03]'

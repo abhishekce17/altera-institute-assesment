@@ -23,8 +23,8 @@ const TaskSchema = new Schema<ITask>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+      required: [true, 'User ID is mandatory for task ownership'],
       index: true,
-      default: null,
     },
     title: {
       type: String,

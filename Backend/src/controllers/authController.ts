@@ -19,7 +19,7 @@ function getCookieOptions() {
 
 /**
  * Register a new user in MongoDB.
- * Sets HTTP-only authentication cookie and seeds starter tasks.
+ * Sets HTTP-only authentication cookie. Clean user state without mock data.
  */
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

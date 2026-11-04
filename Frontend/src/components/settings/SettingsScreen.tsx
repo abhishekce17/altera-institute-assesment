@@ -11,16 +11,19 @@ import {
   Bell,
   ShieldCheck,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { TaskPriority } from '../../types/task';
 import { useAuth } from '../../context/AuthContext';
 import { AuthModal } from '../auth/AuthModal';
 
 interface SettingsScreenProps {
-  onBack: () => void;
+  onBack?: () => void;
   onRefreshData?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefreshData }) => {
+  const navigate = useNavigate();
+  const handleBack = onBack || (() => navigate('/home'));
   const { user, isAuthenticated, logout, updateProfile, refreshProfile } = useAuth();
 
   // Local form state initialized from MongoDB user profile
@@ -119,7 +122,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, onRefres
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={onBack}
+              onClick={handleBack}
               aria-label="Back to home"
               className="p-2 -ml-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1.5"
             >

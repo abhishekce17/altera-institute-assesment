@@ -1,23 +1,37 @@
 import React, { useState } from 'react';
 import { X, Lock, Mail, User as UserIcon, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useAppStore } from '../../store/useAppStore';
+import { useTasks } from '../../hooks/useTasks';
 
 interface AuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   onSuccess?: () => void;
   initialMode?: 'login' | 'register';
   subtitle?: string;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
-  isOpen,
-  onClose,
+  isOpen: propIsOpen,
+  onClose: propOnClose,
   onSuccess,
   initialMode = 'login',
-  subtitle,
+  subtitle: propSubtitle,
 }) => {
   const { login, register } = useAuth();
+  const { addTask, updateTask, refreshTasks } = useTasks();
+  const storeIsOpen = useAppStore((s) => s.isAuthModalOpen);
+  const storeSubtitle = useAppStore((s) => s.authModalSubtitle);
+  const closeAuthModal = useAppStore((s) => s.closeAuthModal);
+  const closeTaskModal = useAppStore((s) => s.closeTaskModal);
+  const pendingTaskSubmission = useAppStore((s) => s.pendingTaskSubmission);
+  const clearPendingTaskSubmission = useAppStore((s) => s.clearPendingTaskSubmission);
+
+  const isOpen = propIsOpen ?? storeIsOpen;
+  const subtitle = propSubtitle ?? storeSubtitle;
+  const handleClose = propOnClose ?? closeAuthModal;
+
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -49,8 +63,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         await register({ name: name.trim(), email: email.trim(), password });
       }
 
+      // Automatically execute pending task submission if one was preserved
+      if (pendingTaskSubmission) {
+        const { formData, isEditing, taskId } = pendingTaskSubmission;
+        try {
+          if (isEditing && taskId) {
+            await updateTask(taskId, formData);
+          } else {
+            await addTask(formData);
+          }
+        } catch (err) {
+          console.error('[AuthModal] Failed to auto-save pending task post-login:', err);
+        } finally {
+          clearPendingTaskSubmission();
+          closeTaskModal();
+        }
+      }
+
+      await refreshTasks();
       if (onSuccess) onSuccess();
-      onClose();
+      handleClose();
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please verify your details.');
     } finally {
@@ -65,7 +97,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       aria-labelledby="auth-modal-title"
       className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 transition-opacity"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) handleClose();
       }}
     >
       <div className="bg-white border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -89,7 +121,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close dialog"
             className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
           >

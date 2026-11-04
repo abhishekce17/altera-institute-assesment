@@ -1,35 +1,42 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, X } from 'lucide-react';
 import { TaskItem } from '../tasks/TaskItem';
+import { useTasks } from '../../hooks/useTasks';
+import { useAppStore } from '../../store/useAppStore';
 import type { Task } from '../../types/task';
 
 interface SearchScreenProps {
-  tasks: Task[];
-  onBack: () => void;
-  onToggleStatus: (id: string) => void;
-  onEdit: (task: Task) => void;
-  onDelete: (id: string) => void;
+  tasks?: Task[];
+  onBack?: () => void;
+  onToggleStatus?: (id: string) => void;
+  onEdit?: (task: Task) => void;
+  onDelete?: (id: string) => void;
 }
 
-export const SearchScreen: React.FC<SearchScreenProps> = ({
-  tasks,
-  onBack,
-  onToggleStatus,
-  onEdit,
-  onDelete,
-}) => {
+export const SearchScreen: React.FC<SearchScreenProps> = (props) => {
+  const navigate = useNavigate();
+  const { tasks: storeTasks, toggleTaskStatus, deleteTask } = useTasks();
+  const openEditTask = useAppStore((state) => state.openEditTask);
+
+  const activeTasks = props.tasks ?? storeTasks;
+  const handleBack = props.onBack || (() => navigate('/home'));
+  const handleToggleStatus = props.onToggleStatus ?? toggleTaskStatus;
+  const handleEdit = props.onEdit ?? openEditTask;
+  const handleDelete = props.onDelete ?? deleteTask;
+
   const [query, setQuery] = useState<string>('');
 
   const filteredTasks = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
-    if (!trimmed) return tasks;
+    if (!trimmed) return activeTasks;
 
-    return tasks.filter(
+    return activeTasks.filter(
       (task) =>
         task.title.toLowerCase().includes(trimmed) ||
         (task.description && task.description.toLowerCase().includes(trimmed))
     );
-  }, [tasks, query]);
+  }, [activeTasks, query]);
 
   return (
     <div className="flex-1 flex flex-col bg-white min-h-screen md:min-h-[850px] p-5 md:p-8">
@@ -38,7 +45,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
         <div className="flex items-center gap-3 mb-6">
           <button
             type="button"
-            onClick={onBack}
+            onClick={handleBack}
             aria-label="Back to home"
             className="p-2 -ml-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1.5"
           >
@@ -77,7 +84,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
         {/* Results Header */}
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            {query.trim() ? `Results (${filteredTasks.length})` : `All Tasks (${tasks.length})`}
+            {query.trim() ? `Results (${filteredTasks.length})` : `All Tasks (${activeTasks.length})`}
           </span>
         </div>
 
@@ -96,9 +103,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
               <TaskItem
                 key={task._id}
                 task={task}
-                onToggleStatus={onToggleStatus}
-                onEdit={onEdit}
-                onDelete={onDelete}
+                onToggleStatus={handleToggleStatus}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
               />
             ))
           )}
