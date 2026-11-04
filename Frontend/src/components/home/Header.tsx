@@ -153,6 +153,17 @@ export const Header: React.FC<HeaderProps> = ({
               <Bell className="w-5 h-5 stroke-[1.8]" />
               <span className="notification-badge absolute top-2 right-2 w-2 h-2 bg-[#3866F2] ring-2 ring-white" />
             </button>
+
+            {onAddTaskClick && (
+              <button
+                type="button"
+                onClick={onAddTaskClick}
+                aria-label="Add Task"
+                className="w-9 h-9 flex items-center justify-center bg-[#3866F2] hover:bg-[#2B52D4] text-white transition-colors cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            )}
           </div>
         </div>
 

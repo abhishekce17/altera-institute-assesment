@@ -4,7 +4,6 @@ import { DateStrip } from './DateStrip';
 import { SummaryCards } from './SummaryCards';
 import { ProgressBar } from './ProgressBar';
 import { TaskList } from '../tasks/TaskList';
-import { FloatingActionButton } from '../ui/FloatingActionButton';
 import { getWeekDays } from '../../utils/date';
 import type { Task, WeeklyStats } from '../../types/task';
 import { Calendar, CheckCircle2 } from 'lucide-react';
@@ -160,9 +159,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </section>
         </div>
       </div>
-
-      {/* Floating Action Button (Responsive positioning) */}
-      <FloatingActionButton onClick={onAddTaskClick} />
     </div>
   );
 };
