@@ -24,3 +24,4 @@ export const MobileContainer: React.FC<MobileContainerProps> = ({ children }) =>
     </div>
   );
 };
+

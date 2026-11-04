@@ -56,3 +56,4 @@ Phase 3 focuses on mobile ergonomics: fluid touch-driven swipe deletion, an acce
     - `toggleTaskStatus(id: string)`
     - `deleteTask(id: string)`
   - Preloaded with the sample tasks from the Figma mockups ("Finishing Wireframe", "Meeting with team", "Buy a cat food", "Finishing daily commission", "Doing Homework") for immediate offline testing.
+

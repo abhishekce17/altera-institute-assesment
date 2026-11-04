@@ -44,3 +44,4 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
     </div>
   );
 };
+
