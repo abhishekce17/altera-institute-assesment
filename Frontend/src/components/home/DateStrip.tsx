@@ -17,7 +17,7 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
 
   return (
     <div className="px-4 md:px-0 py-2">
-      <div className="flex items-center justify-between gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-1">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 w-full py-1">
         {activeDays.map((day) => {
           const isSelected = day.isSelected;
           return (
@@ -25,10 +25,10 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
               key={day.dateString}
               type="button"
               onClick={() => handleSelectDate(day.dateString)}
-              className={`flex-1 min-w-[42px] max-w-[48px] md:max-w-none py-2.5 md:py-3 px-1 md:px-2 flex flex-col items-center justify-center transition-all cursor-pointer ${
+              className={`w-full h-[68px] flex flex-col items-center justify-center cursor-pointer transition-colors border ${
                 isSelected
-                  ? 'bg-[#3866F2] text-white scale-[1.03]'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-200/60'
+                  ? 'bg-[#3866F2] text-white border-[#3866F2]'
+                  : 'bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-900 border-transparent hover:border-slate-200/60'
               }`}
             >
               {/* Day abbreviation (Mon, Tue, etc.) */}
@@ -58,7 +58,7 @@ export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
                     }`}
                   />
                 ) : (
-                  <span className="date-dot w-1.5 h-1.5 bg-transparent" />
+                  <span className="w-1.5 h-1.5 invisible" />
                 )}
               </div>
             </button>

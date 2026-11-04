@@ -110,7 +110,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
 
           {/* Right Column: Task List (7 cols) */}
           <div className="lg:col-span-7 bg-white">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 min-h-[44px]">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-slate-900">
                   {headingText}
@@ -171,7 +171,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = (props) => {
 
           {/* Tasks Section */}
           <section className="px-5 pt-3 pb-24">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 min-h-[32px]">
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-slate-900">
                   {headingText}
