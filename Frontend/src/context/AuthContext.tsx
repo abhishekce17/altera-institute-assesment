@@ -5,18 +5,18 @@ import { api } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
   login: (credentials: { email: string; password: string }) => Promise<void>;
-  register: (info: { name: string; email: string; password: string }) => Promise<void>;
-  logout: () => void;
+  register: (info: { name: string; email: string; password: string; hasOnboarded?: boolean }) => Promise<void>;
+  logout: () => Promise<void>;
   updateProfile: (updates: {
     name?: string;
     email?: string;
     password?: string;
     preferences?: { defaultPriority?: TaskPriority; notificationEnabled?: boolean };
+    hasOnboarded?: boolean;
   }) => Promise<User>;
   refreshProfile: () => Promise<void>;
   clearError: () => void;
@@ -26,30 +26,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setTokenState] = useState<string | null>(api.getToken());
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const clearError = useCallback(() => setError(null), []);
 
   const refreshProfile = useCallback(async () => {
-    const currentToken = api.getToken();
-    if (!currentToken) {
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-
     try {
       setIsLoading(true);
+      // HTTP-only cookie is sent automatically by the browser with credentials: 'include'
       const profile = await api.getProfile();
       setUser(profile);
       setError(null);
-    } catch (err) {
-      console.warn('[AuthContext] Failed to load user profile from MongoDB:', err);
-      // If unauthorized, reset token
-      api.setToken(null);
-      setTokenState(null);
+    } catch {
+      // Unauthenticated session (guest)
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -65,7 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     try {
       const res = await api.login(credentials);
-      setTokenState(res.token);
       setUser(res.user);
     } catch (err: any) {
       const msg = err.message || 'Login failed. Please check your credentials.';
@@ -76,12 +65,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (info: { name: string; email: string; password: string }) => {
+  const register = async (info: { name: string; email: string; password: string; hasOnboarded?: boolean }) => {
     setIsLoading(true);
     setError(null);
     try {
       const res = await api.register(info);
-      setTokenState(res.token);
       setUser(res.user);
     } catch (err: any) {
       const msg = err.message || 'Registration failed. Please check your details.';
@@ -92,9 +80,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    api.setToken(null);
-    setTokenState(null);
+  const logout = async () => {
+    try {
+      await api.logout();
+    } catch {
+      // Best effort
+    }
     setUser(null);
     setError(null);
   };
@@ -104,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email?: string;
     password?: string;
     preferences?: { defaultPriority?: TaskPriority; notificationEnabled?: boolean };
+    hasOnboarded?: boolean;
   }): Promise<User> => {
     setIsLoading(true);
     setError(null);
@@ -124,7 +116,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         user,
-        token,
         isAuthenticated: !!user,
         isLoading,
         error,
@@ -148,4 +139,3 @@ export function useAuth(): AuthContextType {
   }
   return context;
 }
-

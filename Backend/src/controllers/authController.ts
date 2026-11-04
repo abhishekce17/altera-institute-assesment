@@ -5,13 +5,27 @@ import { hashPassword, verifyPassword, createToken } from '../utils/authUtils.js
 import { getTodayString } from '../utils/dateUtils.js';
 import type { AuthRequest } from '../middlewares/auth.js';
 
+const COOKIE_NAME = 'token';
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+function getCookieOptions() {
+  const isProduction = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? ('none' as const) : ('lax' as const),
+    maxAge: SEVEN_DAYS_MS,
+    path: '/',
+  };
+}
+
 /**
  * Register a new user in MongoDB.
- * Also seeds starter tasks in MongoDB associated with this new user's _id.
+ * Sets HTTP-only authentication cookie and seeds starter tasks.
  */
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { name, email, password, preferences } = req.body;
+    const { name, email, password, preferences, hasOnboarded } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -31,6 +45,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
         defaultPriority: preferences?.defaultPriority || 'Medium',
         notificationEnabled: preferences?.notificationEnabled !== false,
       },
+      hasOnboarded: hasOnboarded === true,
     });
 
     // Seed default starter tasks directly in MongoDB for the new user
@@ -73,10 +88,13 @@ export async function register(req: Request, res: Response, next: NextFunction):
       email: user.email,
     });
 
+    // Set HTTP-only Cookie with CORS compatibility
+    res.cookie(COOKIE_NAME, token, getCookieOptions());
+
     res.status(201).json({
       success: true,
       message: 'Account registered and persisted to MongoDB successfully',
-      token,
+      token, // Also return in body for non-browser clients (curl / postman)
       user: user.toSafeJSON(),
     });
   } catch (error) {
@@ -86,6 +104,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
 
 /**
  * Authenticate user credentials against MongoDB.
+ * Sets HTTP-only authentication cookie.
  */
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -114,15 +133,36 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
       email: user.email,
     });
 
+    // Set HTTP-only Cookie with CORS compatibility
+    res.cookie(COOKIE_NAME, token, getCookieOptions());
+
     res.status(200).json({
       success: true,
       message: 'Logged in successfully',
-      token,
+      token, // Also return in body for non-browser clients
       user: user.toSafeJSON(),
     });
   } catch (error) {
     next(error);
   }
+}
+
+/**
+ * Log out user and clear HTTP-only session cookie.
+ */
+export async function logout(_req: Request, res: Response): Promise<void> {
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.clearCookie(COOKIE_NAME, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? ('none' as const) : ('lax' as const),
+    path: '/',
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully. Cookie removed.',
+  });
 }
 
 /**
@@ -149,7 +189,7 @@ export async function getMe(req: Request, res: Response, next: NextFunction): Pr
 }
 
 /**
- * Update user profile details and preferences directly in MongoDB.
+ * Update user profile details, hasOnboarded status, and preferences directly in MongoDB.
  */
 export async function updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -162,7 +202,7 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
       return;
     }
 
-    const { name, email, password, preferences } = req.body;
+    const { name, email, password, preferences, hasOnboarded } = req.body;
 
     // Check email uniqueness if email is changing
     if (email && email.toLowerCase() !== user.email.toLowerCase()) {
@@ -188,6 +228,10 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
       user.password = hashPassword(password);
     }
 
+    if (typeof hasOnboarded === 'boolean') {
+      user.hasOnboarded = hasOnboarded;
+    }
+
     if (preferences) {
       if (preferences.defaultPriority) {
         user.preferences.defaultPriority = preferences.defaultPriority;
@@ -208,4 +252,3 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
     next(error);
   }
 }
-

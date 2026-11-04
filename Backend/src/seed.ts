@@ -108,6 +108,7 @@ async function seed() {
         defaultPriority: 'Medium',
         notificationEnabled: true,
       },
+      hasOnboarded: true,
     });
     console.log(`[Seed] Demo user created: ${demoUser.email} (_id: ${demoUser._id})`);
 

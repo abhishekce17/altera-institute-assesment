@@ -4,37 +4,17 @@ import type { User, AuthResponse } from '../types/auth';
 
 // Configurable base URL: uses VITE_API_BASE_URL if defined, otherwise defaults to /api (handled by Vite proxy in dev)
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
-const TOKEN_KEY = 'todo_app_auth_token';
 
 class ApiService {
   private base: string;
-  private token: string | null = null;
+  private token: string | null = null; // In-memory fallback token
 
   constructor(baseUrl: string) {
     this.base = baseUrl;
-    // Load stored session token if available
-    try {
-      this.token = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
-    } catch {
-      this.token = null;
-    }
   }
 
-  setToken(token: string | null, persist = true) {
+  setToken(token: string | null) {
     this.token = token;
-    try {
-      if (token) {
-        if (persist) {
-          localStorage.setItem(TOKEN_KEY, token);
-        }
-        sessionStorage.setItem(TOKEN_KEY, token);
-      } else {
-        localStorage.removeItem(TOKEN_KEY);
-        sessionStorage.removeItem(TOKEN_KEY);
-      }
-    } catch {
-      // Ignore storage errors in restricted iframe environments
-    }
   }
 
   getToken(): string | null {
@@ -60,6 +40,7 @@ class ApiService {
       const res = await fetch(`${this.base}/health`, {
         method: 'GET',
         headers: this.getHeaders(),
+        credentials: 'include',
         signal: AbortSignal.timeout(3000),
       });
       return res.ok;
@@ -68,58 +49,84 @@ class ApiService {
     }
   }
 
-  // ==================== AUTHENTICATION & USER PROFILE ====================
+  // ==================== AUTHENTICATION & USER PROFILE (COOKIES & MONGODB) ====================
 
   /**
    * Register a new user account in MongoDB.
+   * Backend sets HTTP-only secure cookie with CORS.
    */
   async register(data: {
     name: string;
     email: string;
     password: string;
     preferences?: { defaultPriority?: string; notificationEnabled?: boolean };
+    hasOnboarded?: boolean;
   }): Promise<{ token: string; user: User }> {
     const res = await fetch(`${this.base}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
     const json: AuthResponse = await res.json().catch(() => ({ success: false, error: 'Registration failed' }));
-    if (!res.ok || !json.success || !json.token || !json.user) {
+    if (!res.ok || !json.success || !json.user) {
       throw new Error(json.error || 'Failed to create account');
     }
 
-    this.setToken(json.token);
-    return { token: json.token, user: json.user };
+    if (json.token) {
+      this.setToken(json.token);
+    }
+    return { token: json.token || '', user: json.user };
   }
 
   /**
    * Log in to an existing MongoDB user account.
+   * Backend sets HTTP-only secure cookie with CORS.
    */
   async login(data: { email: string; password: string }): Promise<{ token: string; user: User }> {
     const res = await fetch(`${this.base}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
     const json: AuthResponse = await res.json().catch(() => ({ success: false, error: 'Login request failed' }));
-    if (!res.ok || !json.success || !json.token || !json.user) {
+    if (!res.ok || !json.success || !json.user) {
       throw new Error(json.error || 'Invalid email or password');
     }
 
-    this.setToken(json.token);
-    return { token: json.token, user: json.user };
+    if (json.token) {
+      this.setToken(json.token);
+    }
+    return { token: json.token || '', user: json.user };
   }
 
   /**
-   * Fetch current user profile and preferences directly from MongoDB.
+   * Log out of account and instruct backend to clear HTTP-only cookie.
+   */
+  async logout(): Promise<void> {
+    this.setToken(null);
+    try {
+      await fetch(`${this.base}/auth/logout`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        credentials: 'include',
+      });
+    } catch {
+      // Best-effort logout
+    }
+  }
+
+  /**
+   * Fetch current user profile and preferences directly from MongoDB via Cookie session.
    */
   async getProfile(): Promise<User> {
     const res = await fetch(`${this.base}/auth/me`, {
       method: 'GET',
       headers: this.getHeaders(),
+      credentials: 'include',
     });
 
     const json = await res.json().catch(() => ({ success: false, error: 'Failed to fetch user profile' }));
@@ -131,17 +138,19 @@ class ApiService {
   }
 
   /**
-   * Update user details and preferences in MongoDB.
+   * Update user details, hasOnboarded status, and preferences in MongoDB.
    */
   async updateProfile(data: {
     name?: string;
     email?: string;
     password?: string;
     preferences?: { defaultPriority?: string; notificationEnabled?: boolean };
+    hasOnboarded?: boolean;
   }): Promise<User> {
     const res = await fetch(`${this.base}/auth/profile`, {
       method: 'PUT',
       headers: this.getHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
@@ -175,6 +184,7 @@ class ApiService {
     const res = await fetch(url.toString(), {
       method: 'GET',
       headers: this.getHeaders(),
+      credentials: 'include',
     });
 
     if (!res.ok) {
@@ -199,6 +209,7 @@ class ApiService {
     const res = await fetch(url.toString(), {
       method: 'GET',
       headers: this.getHeaders(),
+      credentials: 'include',
     });
 
     if (!res.ok) {
@@ -217,6 +228,7 @@ class ApiService {
     const res = await fetch(`${this.base}/tasks`, {
       method: 'POST',
       headers: this.getHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
@@ -236,6 +248,7 @@ class ApiService {
     const res = await fetch(`${this.base}/tasks/${id}`, {
       method: 'PUT',
       headers: this.getHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'include',
       body: JSON.stringify(data),
     });
 
@@ -255,6 +268,7 @@ class ApiService {
     const res = await fetch(`${this.base}/tasks/${id}/status`, {
       method: 'PATCH',
       headers: this.getHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'include',
       body: JSON.stringify(status ? { status } : {}),
     });
 
@@ -274,6 +288,7 @@ class ApiService {
     const res = await fetch(`${this.base}/tasks/${id}`, {
       method: 'DELETE',
       headers: this.getHeaders(),
+      credentials: 'include',
     });
 
     if (!res.ok) {

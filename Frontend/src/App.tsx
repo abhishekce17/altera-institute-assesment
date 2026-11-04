@@ -7,11 +7,14 @@ import { NotificationScreen } from './components/notifications/NotificationScree
 import { SettingsScreen } from './components/settings/SettingsScreen';
 import { TaskModal, type TaskFormData } from './components/tasks/TaskModal';
 import { useTasks } from './hooks/useTasks';
+import { useAuth } from './context/AuthContext';
 import type { Task } from './types/task';
 
 type Screen = 'onboarding' | 'home' | 'search' | 'notifications' | 'settings';
 
 export function App() {
+  const { user, updateProfile } = useAuth();
+
   const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -19,10 +22,19 @@ export function App() {
       if (screenParam && ['onboarding', 'home', 'search', 'notifications', 'settings'].includes(screenParam)) {
         return screenParam;
       }
-      return localStorage.getItem('todo_has_onboarded') === 'true' ? 'home' : 'onboarding';
     }
     return 'onboarding';
   });
+
+  // When user is authenticated and hasOnboarded is true in MongoDB, automatically show home screen
+  useEffect(() => {
+    if (user?.hasOnboarded && currentScreen === 'onboarding') {
+      const params = new URLSearchParams(window.location.search);
+      if (!params.get('screen')) {
+        setCurrentScreen('home');
+      }
+    }
+  }, [user?.hasOnboarded, currentScreen]);
 
   const {
     tasks,
@@ -75,7 +87,12 @@ export function App() {
   });
 
   const handleGetStarted = () => {
-    localStorage.setItem('todo_has_onboarded', 'true');
+    // If logged in, persist hasOnboarded flag directly to MongoDB
+    if (user) {
+      updateProfile({ hasOnboarded: true }).catch((err) => {
+        console.warn('[Onboarding] Failed to persist onboarding status to MongoDB:', err);
+      });
+    }
     setCurrentScreen('home');
   };
 

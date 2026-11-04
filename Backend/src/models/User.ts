@@ -11,6 +11,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   preferences: IUserPreferences;
+  hasOnboarded: boolean;
   createdAt: Date;
   updatedAt: Date;
   toSafeJSON(): Record<string, any>;
@@ -59,6 +60,10 @@ const UserSchema = new Schema<IUser>(
         defaultPriority: 'Medium',
         notificationEnabled: true,
       }),
+    },
+    hasOnboarded: {
+      type: Boolean,
+      default: false,
     },
   },
   {

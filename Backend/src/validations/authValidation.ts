@@ -10,6 +10,7 @@ export const registerSchema = z.object({
       notificationEnabled: z.boolean().optional(),
     })
     .optional(),
+  hasOnboarded: z.boolean().optional(),
 });
 
 export const loginSchema = z.object({
@@ -27,6 +28,7 @@ export const updateProfileSchema = z.object({
       notificationEnabled: z.boolean().optional(),
     })
     .optional(),
+  hasOnboarded: z.boolean().optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
