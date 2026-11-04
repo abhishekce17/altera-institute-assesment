@@ -17,21 +17,27 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 }) => {
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [isSwiping, setIsSwiping] = useState<boolean>(false);
+
   const isDraggingRef = useRef<boolean>(false);
   const startXRef = useRef<number>(0);
   const startYRef = useRef<number>(0);
+  const startOffsetRef = useRef<number>(0);
+  const hasDraggedRef = useRef<boolean>(false);
+  const justDraggedRef = useRef<boolean>(false);
   const isHorizontalRef = useRef<boolean | null>(null);
 
   const isCompleted = task.status === 'completed';
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    // Ignore clicks on action buttons (checkbox, edit, delete)
+    // Ignore clicks on interactive buttons (checkbox, edit, delete)
     if ((e.target as HTMLElement).closest('button')) {
       return;
     }
 
     startXRef.current = e.clientX;
     startYRef.current = e.clientY;
+    startOffsetRef.current = swipeOffset;
+    hasDraggedRef.current = false;
     isHorizontalRef.current = null;
     isDraggingRef.current = true;
     setIsSwiping(true);
@@ -43,48 +49,44 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     const deltaX = startXRef.current - e.clientX;
     const deltaY = Math.abs(startYRef.current - e.clientY);
 
-    // Determine direction on first significant movement
+    // Lock direction on initial gesture
     if (isHorizontalRef.current === null) {
       if (Math.abs(deltaX) > 6 || deltaY > 6) {
         isHorizontalRef.current = Math.abs(deltaX) > deltaY;
-        if (isHorizontalRef.current && (e.currentTarget as HTMLElement).setPointerCapture) {
-          try {
-            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-          } catch {}
-        }
       }
     }
 
     if (!isHorizontalRef.current) return;
 
-    // Swiping left to reveal / trigger delete
-    if (deltaX > 0) {
-      setSwipeOffset(Math.min(220, deltaX));
-    } else if (swipeOffset > 0) {
-      // Swiping right to close
-      setSwipeOffset(Math.max(0, 80 + deltaX));
+    if (Math.abs(deltaX) > 5) {
+      hasDraggedRef.current = true;
     }
+
+    // Calculate target offset from initial offset
+    const nextOffset = Math.max(0, Math.min(200, startOffsetRef.current + deltaX));
+    setSwipeOffset(nextOffset);
   };
 
-  const handlePointerEnd = (e: React.PointerEvent) => {
+  const handlePointerEnd = () => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     setIsSwiping(false);
 
-    if ((e.currentTarget as HTMLElement).releasePointerCapture) {
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch {}
+    if (hasDraggedRef.current) {
+      justDraggedRef.current = true;
+      setTimeout(() => {
+        justDraggedRef.current = false;
+      }, 250);
     }
 
-    // Full swipe (> 150px) triggers delete directly
-    if (swipeOffset > 150) {
-      setSwipeOffset(350);
+    // Full swipe (> 130px) triggers delete animation & deletion
+    if (swipeOffset > 130) {
+      setSwipeOffset(400);
       setTimeout(() => {
         onDelete(task._id);
-      }, 150);
-    } else if (swipeOffset > 40) {
-      // Snap open to reveal delete button
+      }, 180);
+    } else if (swipeOffset > 35) {
+      // Snap open cleanly to reveal the 80px delete button
       setSwipeOffset(80);
     } else {
       // Snap closed
@@ -101,17 +103,21 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   return (
     <div className="relative overflow-hidden my-2 select-none group touch-pan-y">
       {/* Background Revealed Delete Trigger */}
-      <div className="absolute inset-y-0 right-0 w-full bg-red-500 flex items-center justify-end pr-5 text-white font-medium text-xs">
+      <div
+        className="absolute inset-y-0 right-0 w-20 bg-red-600 flex items-center justify-center text-white"
+        style={{ zIndex: 1 }}
+      >
         <button
           type="button"
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             setSwipeOffset(0);
             onDelete(task._id);
           }}
-          className="h-full px-5 flex items-center justify-center gap-1.5 text-white hover:bg-red-600 active:bg-red-700 transition-colors cursor-pointer"
+          className="w-full h-full flex flex-col items-center justify-center gap-1 text-white hover:bg-red-700 active:bg-red-800 transition-colors cursor-pointer"
         >
-          <Trash2 className="w-5 h-5" />
-          <span className="text-xs font-bold">Delete</span>
+          <Trash2 className="w-4 h-4 stroke-[2.2]" />
+          <span className="text-[10px] font-bold tracking-wider uppercase">Delete</span>
         </button>
       </div>
 
@@ -121,16 +127,23 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerCancel={handlePointerEnd}
+        onDragStart={(e) => e.preventDefault()}
         onClick={() => {
-          if (swipeOffset > 0 && !isSwiping) {
+          if (justDraggedRef.current) return;
+          if (swipeOffset > 0) {
             setSwipeOffset(0);
           }
         }}
         style={{
           transform: `translateX(-${swipeOffset}px)`,
-          transition: isSwiping ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+          transition: isSwiping ? 'none' : 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+          touchAction: 'pan-y',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
         }}
-        className="relative bg-white border border-slate-100/90 p-3.5 md:p-4 flex items-center justify-between gap-3 hover:border-slate-300/80 transition-all z-10 cursor-grab active:cursor-grabbing"
+        className={`relative bg-white border border-slate-100/90 p-3.5 md:p-4 flex items-center justify-between gap-3 hover:border-slate-300/80 transition-colors z-10 ${
+          swipeOffset > 0 ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'
+        }`}
       >
         {/* Left: Checkbox & Task Information */}
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
@@ -156,6 +169,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             <h3
               onClick={(e) => {
                 e.stopPropagation();
+                if (justDraggedRef.current) return;
                 if (swipeOffset > 0) {
                   setSwipeOffset(0);
                 } else {
