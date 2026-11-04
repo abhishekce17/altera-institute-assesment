@@ -53,6 +53,38 @@ export function getWeekDays(referenceDateStr: string, selectedDateStr: string): 
 }
 
 /**
+ * Generates an array of DayItem spanning from `pastDays` before today to `futureDays` after today.
+ * Allows smooth horizontal scrolling in both past and future directions from the current date.
+ */
+export function getScrollableDays(
+  selectedDateStr: string,
+  pastDays = 60,
+  futureDays = 60
+): DayItem[] {
+  const todayStr = getTodayISO();
+  const [tYear, tMonth, tDay] = todayStr.split('-').map(Number);
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days: DayItem[] = [];
+
+  for (let i = -pastDays; i <= futureDays; i++) {
+    const d = new Date(tYear, tMonth - 1, tDay + i);
+    const isoString = formatDateToISO(d);
+    const dateNum = String(d.getDate()).padStart(2, '0');
+    const dayName = dayNames[d.getDay()];
+
+    days.push({
+      dateString: isoString,
+      dayName,
+      dayNumber: dateNum,
+      isToday: isoString === todayStr,
+      isSelected: isoString === selectedDateStr,
+    });
+  }
+
+  return days;
+}
+
+/**
  * Format date for display matching Figma (e.g., "Friday 14, January")
  */
 export function formatDisplayDate(dateStr: string): string {

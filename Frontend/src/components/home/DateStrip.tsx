@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import type { DayItem } from '../../types/task';
 import { useAppStore } from '../../store/useAppStore';
-import { getWeekDays } from '../../utils/date';
+import { useTasks } from '../../hooks/useTasks';
+import { getScrollableDays, getTodayISO } from '../../utils/date';
 
 interface DateStripProps {
   days?: DayItem[];
@@ -11,54 +13,154 @@ interface DateStripProps {
 export const DateStrip: React.FC<DateStripProps> = ({ days, onSelectDate }) => {
   const selectedDate = useAppStore((state) => state.selectedDate);
   const setSelectedDate = useAppStore((state) => state.setSelectedDate);
+  const { tasks } = useTasks();
 
-  const activeDays = days || getWeekDays(selectedDate, selectedDate);
+  const today = getTodayISO();
   const handleSelectDate = onSelectDate || setSelectedDate;
 
+  // Generate 60 days in past and 60 days in future from today for bi-directional scroll
+  const activeDays = useMemo(() => {
+    return days || getScrollableDays(selectedDate, 60, 60);
+  }, [days, selectedDate]);
+
+  // Set of dates that have tasks added
+  const datesWithTasks = useMemo(() => {
+    const set = new Set<string>();
+    if (Array.isArray(tasks)) {
+      for (const t of tasks) {
+        if (t.date) {
+          set.add(t.date);
+        }
+      }
+    }
+    return set;
+  }, [tasks]);
+
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const selectedButtonRef = useRef<HTMLButtonElement | null>(null);
+  const isInitialMount = useRef(true);
+
+  // Auto-scroll selected date into view smoothly
+  useEffect(() => {
+    if (selectedButtonRef.current) {
+      selectedButtonRef.current.scrollIntoView({
+        behavior: isInitialMount.current ? 'auto' : 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+      isInitialMount.current = false;
+    }
+  }, [selectedDate]);
+
+  const handleScrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -260, behavior: 'smooth' });
+    }
+  };
+
+  const handleScrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 260, behavior: 'smooth' });
+    }
+  };
+
+  const handleJumpToToday = () => {
+    handleSelectDate(today);
+  };
+
   return (
-    <div className="px-4 md:px-0 py-2">
-      <div className="grid grid-cols-7 gap-1 sm:gap-2 w-full py-1">
+    <div className="w-full py-1">
+      {/* Top Strip Navigation Controls */}
+      <div className="flex items-center justify-between px-1 mb-2">
+        <div className="flex items-center gap-1.5">
+          {selectedDate !== today && (
+            <button
+              type="button"
+              onClick={handleJumpToToday}
+              className="px-2 py-0.5 text-[10px] font-bold bg-blue-50 text-[#3866F2] hover:bg-blue-100 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <RotateCcw className="w-2.5 h-2.5" />
+              <span>Today</span>
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1 ml-auto">
+          <button
+            type="button"
+            onClick={handleScrollLeft}
+            aria-label="Scroll to previous days"
+            className="w-7 h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handleScrollRight}
+            aria-label="Scroll to next days"
+            className="w-7 h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Horizontally scrollable date strip */}
+      <div
+        ref={scrollRef}
+        tabIndex={0}
+        aria-label="Scrollable calendar strip"
+        className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 px-1 touch-pan-x"
+      >
         {activeDays.map((day) => {
           const isSelected = day.isSelected;
+          const hasTasks = datesWithTasks.has(day.dateString);
+
           return (
             <button
               key={day.dateString}
+              ref={isSelected ? selectedButtonRef : undefined}
               type="button"
               onClick={() => handleSelectDate(day.dateString)}
-              className={`w-full h-[68px] flex flex-col items-center justify-center cursor-pointer transition-colors border ${
+              className={`shrink-0 w-[52px] h-[68px] flex flex-col items-center justify-center cursor-pointer transition-colors border-2 ${
                 isSelected
-                  ? 'bg-[#3866F2] text-white border-[#3866F2]'
-                  : 'bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-900 border-transparent hover:border-slate-200/60'
+                  ? day.isToday
+                    ? 'bg-[#3866F2] text-white border-white ring-2 ring-[#3866F2]'
+                    : 'bg-[#3866F2] text-white border-[#3866F2]'
+                  : day.isToday
+                  ? 'border-[#3866F2] bg-white text-slate-900 font-bold hover:bg-blue-50/40'
+                  : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-200/80'
               }`}
             >
               {/* Day abbreviation (Mon, Tue, etc.) */}
               <span
-                className={`text-[11px] md:text-xs font-medium leading-none mb-1.5 ${
-                  isSelected ? 'text-blue-100' : 'text-slate-400'
+                className={`text-[11px] font-semibold leading-none mb-1.5 ${
+                  isSelected ? 'text-blue-100' : day.isToday ? 'text-[#3866F2]' : 'text-slate-400'
                 }`}
               >
                 {day.dayName}
               </span>
 
-              {/* Day number (12, 13, etc.) */}
+              {/* Day number (02, 05, etc.) */}
               <span
                 className={`text-sm md:text-base font-bold leading-none ${
-                  isSelected ? 'text-white' : 'text-slate-800'
+                  isSelected ? 'text-white' : day.isToday ? 'text-slate-900' : 'text-slate-800'
                 }`}
               >
                 {day.dayNumber}
               </span>
 
-              {/* Current date indicator dot (only displayed on today's date box) */}
+              {/* Task dot indicator: shows only when task(s) are added on this date */}
               <div className="h-1.5 mt-1.5 flex items-center justify-center">
-                {day.isToday ? (
+                {hasTasks ? (
                   <span
                     className={`date-dot w-1.5 h-1.5 ${
                       isSelected ? 'bg-white' : 'bg-[#3866F2]'
-                    }`}
+                    } shrink-0`}
+                    title="Has scheduled tasks"
                   />
                 ) : (
-                  <span className="w-1.5 h-1.5 invisible" />
+                  <span className="w-1.5 h-1.5 invisible shrink-0" />
                 )}
               </div>
             </button>
