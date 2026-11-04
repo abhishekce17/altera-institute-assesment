@@ -1,64 +1,73 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ArrowLeft, Bell, CheckCircle2, Clock, Trash2 } from 'lucide-react';
-
-interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  type: 'reminder' | 'progress' | 'system';
-  isRead: boolean;
-}
+import type { Task } from '../../types/task';
+import { getTodayISO } from '../../utils/date';
 
 interface NotificationScreenProps {
+  tasks?: Task[];
   onBack: () => void;
 }
 
-export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'notif-1',
-      title: 'Task Reminder',
-      message: 'Finishing Wireframe starts at 09:00 AM',
-      time: '15m ago',
-      type: 'reminder',
-      isRead: false,
-    },
-    {
-      id: 'notif-2',
-      title: 'Weekly Progress Update',
-      message: 'You have completed 50% of your scheduled tasks this week',
-      time: '2h ago',
-      type: 'progress',
-      isRead: false,
-    },
-    {
-      id: 'notif-3',
-      title: 'Daily Task Summary',
-      message: '4 tasks are scheduled for today',
-      time: 'Today, 08:00 AM',
-      type: 'reminder',
-      isRead: true,
-    },
-    {
-      id: 'notif-4',
-      title: 'New Week Started',
-      message: 'Monday to Sunday weekly schedule initialized',
-      time: '2 days ago',
-      type: 'system',
-      isRead: true,
-    },
-  ]);
+export const NotificationScreen: React.FC<NotificationScreenProps> = ({ tasks = [], onBack }) => {
+  const [cleared, setCleared] = useState(false);
+  const today = getTodayISO();
 
-  const handleClearAll = () => {
-    setNotifications([]);
-  };
+  // Generate dynamic notification items from live MongoDB tasks
+  const notifications = useMemo(() => {
+    if (cleared) return [];
 
-  const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
-  };
+    const items: Array<{
+      id: string;
+      title: string;
+      message: string;
+      time: string;
+      type: 'reminder' | 'progress' | 'completed';
+      isRead: boolean;
+    }> = [];
+
+    // Filter today's tasks
+    const todayTasks = tasks.filter((t) => t.date === today);
+    const completedToday = todayTasks.filter((t) => t.status === 'completed');
+    const pendingToday = todayTasks.filter((t) => t.status === 'pending');
+
+    // Add notification for upcoming today tasks
+    pendingToday.forEach((t) => {
+      items.push({
+        id: `remind-${t._id}`,
+        title: 'Task Reminder',
+        message: `${t.title} is scheduled for ${t.startTime}`,
+        time: t.startTime,
+        type: 'reminder',
+        isRead: false,
+      });
+    });
+
+    // Add progress summary if tasks exist
+    if (todayTasks.length > 0) {
+      items.push({
+        id: 'progress-today',
+        title: 'Daily Progress',
+        message: `You completed ${completedToday.length} of ${todayTasks.length} tasks scheduled for today.`,
+        time: 'Today',
+        type: 'progress',
+        isRead: completedToday.length > 0,
+      });
+    }
+
+    // Add completed task notices
+    completedToday.forEach((t) => {
+      items.push({
+        id: `done-${t._id}`,
+        title: 'Task Completed',
+        message: `Marked "${t.title}" as complete.`,
+        time: t.endTime,
+        type: 'completed',
+        isRead: true,
+      });
+    });
+
+    return items;
+  }, [tasks, today, cleared]);
 
   return (
     <div className="flex-1 flex flex-col bg-white min-h-screen md:min-h-[850px] p-5 md:p-8">
@@ -81,7 +90,7 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
           {notifications.length > 0 && (
             <button
               type="button"
-              onClick={handleClearAll}
+              onClick={() => setCleared(true)}
               className="text-xs font-semibold text-slate-500 hover:text-red-600 flex items-center gap-1 cursor-pointer transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -99,51 +108,46 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
               <p className="text-xs text-slate-400 mt-1">You're all caught up with your schedule</p>
             </div>
           ) : (
-            notifications.map((notif) => (
+            notifications.map((item) => (
               <div
-                key={notif.id}
-                onClick={() => handleMarkAsRead(notif.id)}
-                className={`p-4 border flex items-start justify-between gap-3 transition-colors cursor-pointer ${
-                  notif.isRead
-                    ? 'bg-white border-slate-100 text-slate-500'
-                    : 'bg-blue-50/30 border-blue-100/80 text-slate-800'
+                key={item.id}
+                className={`p-4 border transition-colors flex items-start gap-3.5 ${
+                  item.isRead
+                    ? 'bg-white border-slate-100'
+                    : 'bg-blue-50/40 border-blue-100'
                 }`}
               >
-                <div className="flex items-start gap-3 min-w-0 flex-1">
-                  <div
-                    className={`w-8 h-8 flex items-center justify-center shrink-0 ${
-                      notif.type === 'progress'
-                        ? 'bg-emerald-50 text-emerald-600'
-                        : notif.type === 'reminder'
-                        ? 'bg-blue-50 text-[#3866F2]'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    {notif.type === 'progress' ? (
-                      <CheckCircle2 className="w-4 h-4" />
-                    ) : (
-                      <Clock className="w-4 h-4" />
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-semibold text-slate-900 leading-tight">
-                        {notif.title}
-                      </h2>
-                      {!notif.isRead && (
-                        <span className="notification-badge w-2 h-2 bg-[#3866F2]" />
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      {notif.message}
-                    </p>
-                  </div>
+                <div
+                  className={`w-8 h-8 flex items-center justify-center shrink-0 ${
+                    item.type === 'completed'
+                      ? 'bg-emerald-100 text-emerald-600'
+                      : item.type === 'progress'
+                      ? 'bg-blue-100 text-[#3866F2]'
+                      : 'bg-amber-100 text-amber-600'
+                  }`}
+                >
+                  {item.type === 'completed' ? (
+                    <CheckCircle2 className="w-4 h-4" />
+                  ) : item.type === 'progress' ? (
+                    <Clock className="w-4 h-4" />
+                  ) : (
+                    <Bell className="w-4 h-4" />
+                  )}
                 </div>
 
-                <span className="text-[11px] text-slate-400 shrink-0 font-medium">
-                  {notif.time}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-xs font-bold text-slate-900 truncate">
+                      {item.title}
+                    </h3>
+                    <span className="text-[10px] text-slate-400 shrink-0">
+                      {item.time}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                    {item.message}
+                  </p>
+                </div>
               </div>
             ))
           )}
@@ -152,4 +156,3 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
     </div>
   );
 };
-

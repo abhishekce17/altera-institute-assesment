@@ -66,25 +66,7 @@ export function App() {
     return false;
   });
 
-  const [editingTask, setEditingTask] = useState<Task | null>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('modal') === 'edit') {
-        return {
-          _id: 'sample-1',
-          title: 'Finishing Wireframe',
-          description: 'High-fidelity wireframes in Figma',
-          date: '2026-11-04',
-          startTime: '09:00 AM',
-          endTime: '10:30 AM',
-          priority: 'High',
-          status: 'pending',
-          weekStart: '2026-11-02',
-        };
-      }
-    }
-    return null;
-  });
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const handleGetStarted = () => {
     // If logged in, persist hasOnboarded flag directly to MongoDB
@@ -149,7 +131,7 @@ export function App() {
       )}
 
       {currentScreen === 'notifications' && (
-        <NotificationScreen onBack={() => setCurrentScreen('home')} />
+        <NotificationScreen tasks={tasks} onBack={() => setCurrentScreen('home')} />
       )}
 
       {currentScreen === 'settings' && (
