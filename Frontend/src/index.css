@@ -32,6 +32,11 @@ body {
   border-radius: 0 !important;
 }
 
+/* Round badge for notification indicator */
+.notification-badge {
+  border-radius: 9999px !important;
+}
+
 #root {
   width: 100%;
   min-height: 100vh;

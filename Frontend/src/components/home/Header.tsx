@@ -66,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer relative"
           >
             <Bell className="w-5 h-5 stroke-[1.8]" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-[#3866F2] ring-2 ring-white" />
+            <span className="notification-badge absolute top-2 right-2 w-2 h-2 bg-[#3866F2] ring-2 ring-white" />
           </button>
 
           <button
@@ -102,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer relative"
             >
               <Bell className="w-5 h-5 stroke-[1.8]" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-[#3866F2] ring-2 ring-white" />
+              <span className="notification-badge absolute top-2 right-2 w-2 h-2 bg-[#3866F2] ring-2 ring-white" />
             </button>
           </div>
         </div>
