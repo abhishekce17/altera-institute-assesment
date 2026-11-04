@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, Mail, User as UserIcon, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { X, Lock, Mail, User as UserIcon, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAppStore } from '../../store/useAppStore';
 import { api } from '../../services/api';
@@ -39,24 +39,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSeedInvigilator = async () => {
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      const data = await api.seedInvigilatorData();
-      await login({ email: data.credentials.email, password: data.credentials.password });
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      await queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      handleClose();
-      if (onSuccess) onSuccess();
-    } catch (err: any) {
-      setError(err?.response?.data?.error || err.message || 'Failed to seed invigilator data');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -267,22 +249,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
-
-          {/* Quick Demo User Seed Trigger */}
-          <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col items-center">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={handleSeedInvigilator}
-              className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-[#3866F2] text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 border border-blue-200"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>1-Click Seed & Demo Login</span>
-            </button>
-            <p className="text-[10px] text-slate-400 mt-1 text-center">
-              Prepopulates past, present & future tasks into MongoDB Atlas
-            </p>
-          </div>
         </div>
       </div>
     </div>
