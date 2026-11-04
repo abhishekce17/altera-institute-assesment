@@ -81,3 +81,4 @@ export async function markNotificationRead(req: Request, res: Response, next: Ne
     next(error);
   }
 }
+

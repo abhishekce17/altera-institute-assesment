@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { MobileContainer } from './components/layout/MobileContainer';
 import { OnboardingScreen } from './components/onboarding/OnboardingScreen';
@@ -10,7 +10,7 @@ import { TaskModal, type TaskFormData } from './components/tasks/TaskModal';
 import { AuthModal } from './components/auth/AuthModal';
 import { useTasks } from './hooks/useTasks';
 import { useAuth } from './context/AuthContext';
-import type { Task } from './types/task';
+import { useAppStore } from './store/useAppStore';
 
 export function App() {
   const { user, isAuthenticated, updateProfile } = useAuth();
@@ -18,14 +18,31 @@ export function App() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
+  // Zustand Store for central UI and application modal/filter state
+  const {
+    selectedDate,
+    showAllTasks,
+    setSelectedDate,
+    toggleShowAllTasks,
+    isTaskModalOpen,
+    editingTask,
+    pendingTaskSubmission,
+    openAddTask,
+    openEditTask,
+    closeTaskModal,
+    isAuthModalOpen,
+    authModalSubtitle,
+    openAuthModal,
+    closeAuthModal,
+    setPendingTaskSubmission,
+    clearPendingTaskSubmission,
+  } = useAppStore();
+
+  // TanStack Query & Mutations for server state synchronization with MongoDB Atlas
   const {
     tasks,
     displayedTasks,
     weeklyStats,
-    selectedDate,
-    showAllTasks,
-    setSelectedDate,
-    setShowAllTasks,
     addTask,
     updateTask,
     toggleTaskStatus,
@@ -33,24 +50,20 @@ export function App() {
     refreshTasks,
   } = useTasks();
 
-  // Fetch data whenever user arrives at the Home screen and is authenticated
+  // Sync modal state from URL search params on mount
+  useEffect(() => {
+    const modalParam = searchParams.get('modal');
+    if (modalParam === 'add' && !isTaskModalOpen) {
+      openAddTask();
+    }
+  }, [searchParams, isTaskModalOpen, openAddTask]);
+
+  // Refetch latest tasks when navigating to /home
   useEffect(() => {
     if (location.pathname === '/home' && isAuthenticated) {
       refreshTasks();
     }
-  }, [location.pathname, refreshTasks, isAuthenticated]);
-
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(() => {
-    return searchParams.get('modal') === 'add' || searchParams.get('modal') === 'edit';
-  });
-
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [pendingTaskSubmission, setPendingTaskSubmission] = useState<{
-    formData: TaskFormData;
-    isEditing: boolean;
-    taskId?: string;
-  } | null>(null);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  }, [location.pathname, isAuthenticated, refreshTasks]);
 
   const handleGetStarted = () => {
     // If logged in, persist hasOnboarded flag directly to MongoDB
@@ -62,27 +75,16 @@ export function App() {
     navigate('/home');
   };
 
-  // Open TaskModal freely - login is only required when submitting "Create Task"
-  const handleOpenAddTask = () => {
-    setEditingTask(null);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsModalOpen(true);
-  };
-
   const handleModalSubmit = async (formData: TaskFormData): Promise<boolean> => {
-    // If user is not authenticated, preserve the entered data and prompt for login
+    // If user is not authenticated, preserve the entered data in Zustand and prompt for login
     if (!isAuthenticated) {
       setPendingTaskSubmission({
         formData,
         isEditing: Boolean(editingTask),
         taskId: editingTask?._id,
       });
-      setIsAuthModalOpen(true);
-      return false; // Prevent TaskModal from closing or resetting
+      openAuthModal('Sign in or create an account to save and create your task');
+      return false; // Prevent TaskModal from closing or resetting inputs
     }
 
     if (editingTask) {
@@ -90,14 +92,13 @@ export function App() {
     } else {
       await addTask(formData);
     }
-    setPendingTaskSubmission(null);
-    setEditingTask(null);
-    setIsModalOpen(false);
+    clearPendingTaskSubmission();
+    closeTaskModal();
     return true;
   };
 
   const handleAuthSuccess = async () => {
-    setIsAuthModalOpen(false);
+    closeAuthModal();
     if (pendingTaskSubmission) {
       const { formData, isEditing, taskId } = pendingTaskSubmission;
       try {
@@ -109,9 +110,8 @@ export function App() {
       } catch (err) {
         console.error('[App] Failed to save pending task post-login:', err);
       } finally {
-        setPendingTaskSubmission(null);
-        setIsModalOpen(false);
-        setEditingTask(null);
+        clearPendingTaskSubmission();
+        closeTaskModal();
       }
     }
     await refreshTasks();
@@ -143,13 +143,13 @@ export function App() {
               selectedDate={selectedDate}
               showAllTasks={showAllTasks}
               onSelectDate={setSelectedDate}
-              onToggleShowAll={() => setShowAllTasks(!showAllTasks)}
+              onToggleShowAll={toggleShowAllTasks}
               onSearchClick={() => navigate('/search')}
               onNotificationClick={() => navigate('/notifications')}
               onSettingsClick={() => navigate('/settings')}
-              onAddTaskClick={handleOpenAddTask}
+              onAddTaskClick={openAddTask}
               onToggleStatus={toggleTaskStatus}
-              onEditTask={handleOpenEditTask}
+              onEditTask={openEditTask}
               onDeleteTask={deleteTask}
             />
           }
@@ -161,7 +161,7 @@ export function App() {
               tasks={tasks}
               onBack={() => navigate('/home')}
               onToggleStatus={toggleTaskStatus}
-              onEdit={handleOpenEditTask}
+              onEdit={openEditTask}
               onDelete={deleteTask}
             />
           }
@@ -188,12 +188,8 @@ export function App() {
 
       {/* Task Modal for Add and Edit */}
       <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setPendingTaskSubmission(null);
-          setEditingTask(null);
-        }}
+        isOpen={isTaskModalOpen}
+        onClose={closeTaskModal}
         onSubmit={handleModalSubmit}
         initialTask={editingTask}
         initialFormData={pendingTaskSubmission?.formData}
@@ -203,14 +199,8 @@ export function App() {
       {/* Authentication Modal triggered on Create Task or Account access */}
       <AuthModal
         isOpen={isAuthModalOpen}
-        subtitle={
-          pendingTaskSubmission
-            ? 'Sign in or create an account to save and create your task'
-            : undefined
-        }
-        onClose={() => {
-          setIsAuthModalOpen(false);
-        }}
+        subtitle={authModalSubtitle}
+        onClose={closeAuthModal}
         onSuccess={handleAuthSuccess}
       />
     </MobileContainer>

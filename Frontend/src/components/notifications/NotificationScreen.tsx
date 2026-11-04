@@ -1,54 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { ArrowLeft, Bell, CheckCircle2, Clock, Trash2, CalendarCheck } from 'lucide-react';
-import { api } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
-
-interface NotificationItem {
-  _id: string;
-  title: string;
-  message: string;
-  type: 'reminder' | 'progress' | 'task_created' | 'task_completed';
-  isRead: boolean;
-  createdAt: string;
-}
+import { useNotifications } from '../../hooks/useNotifications';
 
 interface NotificationScreenProps {
   onBack: () => void;
 }
 
 export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
-  const { isAuthenticated } = useAuth();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Fetch real notifications from MongoDB Atlas
-  const loadNotifications = useCallback(async () => {
-    if (!isAuthenticated) {
-      setNotifications([]);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const data = await api.fetchNotifications();
-      setNotifications(data || []);
-    } catch (err) {
-      console.warn('[Notifications] Fetch notice:', err);
-      setNotifications([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    loadNotifications();
-  }, [loadNotifications]);
+  const { notifications, isLoading, clearAll, isClearing } = useNotifications();
 
   const handleClearAll = async () => {
     try {
-      await api.clearNotifications();
-      setNotifications([]);
+      await clearAll();
     } catch (err) {
       console.error('[Notifications] Clear failed:', err);
     }
@@ -86,10 +49,11 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
             <button
               type="button"
               onClick={handleClearAll}
-              className="text-xs font-semibold text-slate-500 hover:text-red-600 flex items-center gap-1 cursor-pointer transition-colors"
+              disabled={isClearing}
+              className="text-xs font-semibold text-slate-500 hover:text-red-600 flex items-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Clear all</span>
+              <span>{isClearing ? 'Clearing...' : 'Clear all'}</span>
             </button>
           )}
         </div>

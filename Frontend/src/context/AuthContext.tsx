@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User } from '../types/auth';
 import type { TaskPriority } from '../types/task';
 import { api } from '../services/api';
+import { queryClient } from '../services/queryClient';
 
 interface AuthContextType {
   user: User | null;
@@ -56,6 +57,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await api.login(credentials);
       setUser(res.user);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     } catch (err: any) {
       const msg = err.message || 'Login failed. Please check your credentials.';
       setError(msg);
@@ -71,6 +74,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await api.register(info);
       setUser(res.user);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     } catch (err: any) {
       const msg = err.message || 'Registration failed. Please check your details.';
       setError(msg);
@@ -88,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setUser(null);
     setError(null);
+    queryClient.clear();
   };
 
   const updateProfile = async (updates: {

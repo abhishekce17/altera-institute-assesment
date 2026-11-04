@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Settings, Bell, Plus, CheckSquare, LogIn, User as UserIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AuthModal } from '../auth/AuthModal';
-import { api } from '../../services/api';
+import { useNotifications } from '../../hooks/useNotifications';
 
 interface HeaderProps {
   onSearchClick: () => void;
@@ -18,21 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   onNotificationClick,
 }) => {
   const { user, isAuthenticated, refreshProfile } = useAuth();
+  const { unreadCount } = useNotifications();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      api.fetchNotifications()
-        .then((notifs) => {
-          const unread = (notifs || []).filter((n) => !n.isRead).length;
-          setUnreadCount(unread);
-        })
-        .catch(() => setUnreadCount(0));
-    } else {
-      setUnreadCount(0);
-    }
-  }, [isAuthenticated]);
 
   return (
     <header className="px-5 md:px-8 py-3 md:py-4 border-b border-slate-100 bg-white">

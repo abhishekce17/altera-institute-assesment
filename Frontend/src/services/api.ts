@@ -1,35 +1,15 @@
+import { apiClient, setApiToken, getApiToken } from './apiClient';
 import type { Task, WeeklyStats } from '../types/task';
 import type { TaskFormData } from '../components/tasks/TaskModal';
 import type { User, AuthResponse } from '../types/auth';
 
-// Configurable base URL: uses VITE_API_BASE_URL if defined, otherwise defaults to /api (handled by Vite proxy in dev)
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
-
 class ApiService {
-  private base: string;
-  private token: string | null = null; // In-memory fallback token
-
-  constructor(baseUrl: string) {
-    this.base = baseUrl;
-  }
-
   setToken(token: string | null) {
-    this.token = token;
+    setApiToken(token);
   }
 
   getToken(): string | null {
-    return this.token;
-  }
-
-  private getHeaders(customHeaders: Record<string, string> = {}): Record<string, string> {
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-      ...customHeaders,
-    };
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-    return headers;
+    return getApiToken();
   }
 
   /**
@@ -37,23 +17,17 @@ class ApiService {
    */
   async checkHealth(): Promise<boolean> {
     try {
-      const res = await fetch(`${this.base}/health`, {
-        method: 'GET',
-        headers: this.getHeaders(),
-        credentials: 'include',
-        signal: AbortSignal.timeout(3000),
-      });
-      return res.ok;
+      const res = await apiClient.get('/health', { timeout: 3000 });
+      return res.status === 200;
     } catch {
       return false;
     }
   }
 
-  // ==================== AUTHENTICATION & USER PROFILE (COOKIES & MONGODB) ====================
+  // ==================== AUTHENTICATION & USER PROFILE ====================
 
   /**
    * Register a new user account in MongoDB.
-   * Backend sets HTTP-only secure cookie with CORS.
    */
   async register(data: {
     name: string;
@@ -62,15 +36,10 @@ class ApiService {
     preferences?: { defaultPriority?: string; notificationEnabled?: boolean };
     hasOnboarded?: boolean;
   }): Promise<{ token: string; user: User }> {
-    const res = await fetch(`${this.base}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
+    const res = await apiClient.post<AuthResponse>('/auth/register', data);
+    const json = res.data;
 
-    const json: AuthResponse = await res.json().catch(() => ({ success: false, error: 'Registration failed' }));
-    if (!res.ok || !json.success || !json.user) {
+    if (!json.success || !json.user) {
       throw new Error(json.error || 'Failed to create account');
     }
 
@@ -82,18 +51,12 @@ class ApiService {
 
   /**
    * Log in to an existing MongoDB user account.
-   * Backend sets HTTP-only secure cookie with CORS.
    */
   async login(data: { email: string; password: string }): Promise<{ token: string; user: User }> {
-    const res = await fetch(`${this.base}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
+    const res = await apiClient.post<AuthResponse>('/auth/login', data);
+    const json = res.data;
 
-    const json: AuthResponse = await res.json().catch(() => ({ success: false, error: 'Login request failed' }));
-    if (!res.ok || !json.success || !json.user) {
+    if (!json.success || !json.user) {
       throw new Error(json.error || 'Invalid email or password');
     }
 
@@ -104,41 +67,30 @@ class ApiService {
   }
 
   /**
-   * Log out of account and instruct backend to clear HTTP-only cookie.
+   * Log out of account and clear session.
    */
   async logout(): Promise<void> {
     this.setToken(null);
     try {
-      await fetch(`${this.base}/auth/logout`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        credentials: 'include',
-      });
+      await apiClient.post('/auth/logout');
     } catch {
       // Best-effort logout
     }
   }
 
   /**
-   * Fetch current user profile and preferences directly from MongoDB via Cookie session.
+   * Fetch current user profile directly from MongoDB via Cookie session.
    */
   async getProfile(): Promise<User> {
-    const res = await fetch(`${this.base}/auth/me`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-      credentials: 'include',
-    });
-
-    const json = await res.json().catch(() => ({ success: false, error: 'Failed to fetch user profile' }));
-    if (!res.ok || !json.success || !json.user) {
-      throw new Error(json.error || 'Failed to load user profile from MongoDB');
+    const res = await apiClient.get<{ success: boolean; user: User }>('/auth/me');
+    if (!res.data.success || !res.data.user) {
+      throw new Error('Failed to load user profile from MongoDB');
     }
-
-    return json.user;
+    return res.data.user;
   }
 
   /**
-   * Update user details, hasOnboarded status, and preferences in MongoDB.
+   * Update user details and preferences in MongoDB.
    */
   async updateProfile(data: {
     name?: string;
@@ -147,22 +99,14 @@ class ApiService {
     preferences?: { defaultPriority?: string; notificationEnabled?: boolean };
     hasOnboarded?: boolean;
   }): Promise<User> {
-    const res = await fetch(`${this.base}/auth/profile`, {
-      method: 'PUT',
-      headers: this.getHeaders({ 'Content-Type': 'application/json' }),
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
-
-    const json = await res.json().catch(() => ({ success: false, error: 'Failed to update user profile' }));
-    if (!res.ok || !json.success || !json.user) {
-      throw new Error(json.error || 'Failed to update profile in MongoDB');
+    const res = await apiClient.put<{ success: boolean; user: User }>('/auth/profile', data);
+    if (!res.data.success || !res.data.user) {
+      throw new Error('Failed to update profile in MongoDB');
     }
-
-    return json.user;
+    return res.data.user;
   }
 
-  // ==================== TASK OPERATIONS (MONGODB) ====================
+  // ==================== TASK OPERATIONS ====================
 
   /**
    * Fetch tasks with optional filters (date, weekStart, status, search).
@@ -173,132 +117,75 @@ class ApiService {
     status?: string;
     search?: string;
   }): Promise<Task[]> {
-    const url = new URL(`${this.base}/tasks`, window.location.origin);
-    if (params) {
-      if (params.date) url.searchParams.set('date', params.date);
-      if (params.weekStart) url.searchParams.set('weekStart', params.weekStart);
-      if (params.status) url.searchParams.set('status', params.status);
-      if (params.search) url.searchParams.set('search', params.search);
-    }
-
-    const res = await fetch(url.toString(), {
-      method: 'GET',
-      headers: this.getHeaders(),
-      credentials: 'include',
+    const res = await apiClient.get<{ success: boolean; data: Task[] }>('/tasks', {
+      params,
     });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Failed to fetch tasks' }));
-      throw new Error(err.error || `HTTP ${res.status}`);
-    }
-
-    const json = await res.json();
-    return json.data || [];
+    return res.data.data || [];
   }
 
   /**
-   * Fetch weekly statistics (open count, completed count, progress ratio).
+   * Fetch weekly statistics.
    */
   async fetchWeeklyStats(params?: { date?: string; weekStart?: string }): Promise<WeeklyStats> {
-    const url = new URL(`${this.base}/tasks/stats/weekly`, window.location.origin);
-    if (params) {
-      if (params.date) url.searchParams.set('date', params.date);
-      if (params.weekStart) url.searchParams.set('weekStart', params.weekStart);
-    }
-
-    const res = await fetch(url.toString(), {
-      method: 'GET',
-      headers: this.getHeaders(),
-      credentials: 'include',
+    const res = await apiClient.get<{ success: boolean; data: WeeklyStats }>('/tasks/stats/weekly', {
+      params,
     });
+    return res.data.data;
+  }
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Failed to fetch weekly stats' }));
-      throw new Error(err.error || `HTTP ${res.status}`);
-    }
-
-    const json = await res.json();
-    return json.data;
+  /**
+   * Fetch a single task by ID.
+   */
+  async getTaskById(id: string): Promise<Task> {
+    const res = await apiClient.get<{ success: boolean; data: Task }>(`/tasks/${id}`);
+    return res.data.data;
   }
 
   /**
    * Create a new task in MongoDB.
    */
-  async createTask(data: TaskFormData): Promise<Task> {
-    const res = await fetch(`${this.base}/tasks`, {
-      method: 'POST',
-      headers: this.getHeaders({ 'Content-Type': 'application/json' }),
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Failed to create task' }));
-      throw new Error(err.error || `HTTP ${res.status}`);
-    }
-
-    const json = await res.json();
-    return json.data;
+  async createTask(formData: TaskFormData): Promise<Task> {
+    const res = await apiClient.post<{ success: boolean; data: Task }>('/tasks', formData);
+    return res.data.data;
   }
 
   /**
    * Update an existing task in MongoDB.
    */
-  async updateTask(id: string, data: TaskFormData): Promise<Task> {
-    const res = await fetch(`${this.base}/tasks/${id}`, {
-      method: 'PUT',
-      headers: this.getHeaders({ 'Content-Type': 'application/json' }),
-      credentials: 'include',
-      body: JSON.stringify(data),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Failed to update task' }));
-      throw new Error(err.error || `HTTP ${res.status}`);
-    }
-
-    const json = await res.json();
-    return json.data;
+  async updateTask(id: string, formData: TaskFormData): Promise<Task> {
+    const res = await apiClient.put<{ success: boolean; data: Task }>(`/tasks/${id}`, formData);
+    return res.data.data;
   }
 
   /**
-   * Toggle task status between pending and completed in MongoDB.
+   * Toggle status or set status directly.
+   */
+  async patchTaskStatus(id: string, status?: 'pending' | 'completed'): Promise<Task> {
+    const res = await apiClient.patch<{ success: boolean; data: Task }>(
+      `/tasks/${id}/status`,
+      status ? { status } : {}
+    );
+    return res.data.data;
+  }
+
+  /**
+   * Alias for patchTaskStatus
    */
   async toggleTaskStatus(id: string, status?: 'pending' | 'completed'): Promise<Task> {
-    const res = await fetch(`${this.base}/tasks/${id}/status`, {
-      method: 'PATCH',
-      headers: this.getHeaders({ 'Content-Type': 'application/json' }),
-      credentials: 'include',
-      body: JSON.stringify(status ? { status } : {}),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Failed to toggle status' }));
-      throw new Error(err.error || `HTTP ${res.status}`);
-    }
-
-    const json = await res.json();
-    return json.data;
+    return this.patchTaskStatus(id, status);
   }
 
   /**
    * Delete a task by ID from MongoDB.
    */
   async deleteTask(id: string): Promise<void> {
-    const res = await fetch(`${this.base}/tasks/${id}`, {
-      method: 'DELETE',
-      headers: this.getHeaders(),
-      credentials: 'include',
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Failed to delete task' }));
-      throw new Error(err.error || `HTTP ${res.status}`);
-    }
+    await apiClient.delete(`/tasks/${id}`);
   }
 
+  // ==================== NOTIFICATIONS ====================
+
   /**
-   * Fetch real notifications for the authenticated user from MongoDB Atlas.
+   * Fetch real notifications from MongoDB Atlas.
    */
   async fetchNotifications(): Promise<Array<{
     _id: string;
@@ -308,45 +195,33 @@ class ApiService {
     isRead: boolean;
     createdAt: string;
   }>> {
-    const res = await fetch(`${this.base}/notifications`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-      credentials: 'include',
-    });
-
-    if (!res.ok) {
-      return [];
-    }
-
-    const json = await res.json();
-    return json.data || [];
+    const res = await apiClient.get<{
+      success: boolean;
+      data: Array<{
+        _id: string;
+        title: string;
+        message: string;
+        type: 'reminder' | 'progress' | 'task_created' | 'task_completed';
+        isRead: boolean;
+        createdAt: string;
+      }>;
+    }>('/notifications');
+    return res.data.data || [];
   }
 
   /**
    * Delete all notifications for the authenticated user from MongoDB Atlas.
    */
   async clearNotifications(): Promise<void> {
-    const res = await fetch(`${this.base}/notifications`, {
-      method: 'DELETE',
-      headers: this.getHeaders(),
-      credentials: 'include',
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to clear notifications: HTTP ${res.status}`);
-    }
+    await apiClient.delete('/notifications');
   }
 
   /**
    * Mark a single notification as read in MongoDB Atlas.
    */
   async markNotificationRead(id: string): Promise<void> {
-    await fetch(`${this.base}/notifications/${id}/read`, {
-      method: 'PATCH',
-      headers: this.getHeaders(),
-      credentials: 'include',
-    });
+    await apiClient.patch(`/notifications/${id}/read`);
   }
 }
 
-export const api = new ApiService(API_BASE);
+export const api = new ApiService();

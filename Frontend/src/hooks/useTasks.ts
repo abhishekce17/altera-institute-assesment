@@ -1,78 +1,39 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Task, WeeklyStats } from '../types/task';
 import type { TaskFormData } from '../components/tasks/TaskModal';
-import { getMondayOfDate, getTodayISO } from '../utils/date';
+import { getMondayOfDate } from '../utils/date';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useAppStore } from '../store/useAppStore';
 
 export function useTasks() {
-  const { isAuthenticated, user } = useAuth();
-  const today = getTodayISO();
-  const [selectedDate, setSelectedDate] = useState<string>(today);
-  const [showAllTasks, setShowAllTasks] = useState<boolean>(false);
-  const [isOnline, setIsOnline] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
 
-  // Pure dynamic state from MongoDB - no static or mock items
-  const [tasks, setTasks] = useState<Task[]>([]);
+  // Pull active calendar date & showAllTasks filter from Zustand store
+  const {
+    selectedDate,
+    showAllTasks,
+    setSelectedDate,
+    setShowAllTasks,
+  } = useAppStore();
 
-  // Load tasks from backend API connected to MongoDB Atlas for the authenticated user
-  const loadServerTasks = useCallback(async () => {
-    if (!isAuthenticated) {
-      setTasks([]);
-      setIsLoading(false);
-      return;
-    }
+  // Query tasks from MongoDB Atlas for the authenticated user
+  const tasksQuery = useQuery({
+    queryKey: ['tasks'],
+    queryFn: async (): Promise<Task[]> => {
+      if (!isAuthenticated) return [];
+      const data = await api.fetchTasks();
+      return data || [];
+    },
+    enabled: isAuthenticated,
+    staleTime: 1000 * 30, // 30s fresh
+  });
 
-    setIsLoading(true);
-    try {
-      const serverTasks = await api.fetchTasks();
-      setTasks(serverTasks || []);
-      setIsOnline(true);
-    } catch (err) {
-      console.warn('[useTasks] Server sync notice:', err);
-      setIsOnline(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated]);
-
-  // Sync with MongoDB whenever authenticated user changes or logs in
-  useEffect(() => {
-    let ignore = false;
-
-    if (!isAuthenticated) {
-      setTasks([]);
-      setIsLoading(false);
-      return;
-    }
-
-    async function initialSync() {
-      setIsLoading(true);
-      try {
-        const serverTasks = await api.fetchTasks();
-        if (!ignore) {
-          setTasks(serverTasks || []);
-          setIsOnline(true);
-        }
-      } catch (err) {
-        if (!ignore) {
-          console.warn('[useTasks] Initial backend sync:', err);
-          setIsOnline(false);
-        }
-      } finally {
-        if (!ignore) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    initialSync();
-
-    return () => {
-      ignore = true;
-    };
-  }, [isAuthenticated, user?._id]);
+  const tasks = isAuthenticated ? tasksQuery.data || [] : [];
+  const isLoading = tasksQuery.isLoading;
+  const isOnline = !tasksQuery.isError;
 
   // Active week start (Monday)
   const activeWeekStart = useMemo(() => getMondayOfDate(selectedDate), [selectedDate]);
@@ -107,102 +68,106 @@ export function useTasks() {
     };
   }, [weekTasks, activeWeekStart]);
 
-  // Create Task in MongoDB
+  // TanStack Mutation: Create Task in MongoDB Atlas
+  const addTaskMutation = useMutation({
+    mutationFn: (formData: TaskFormData) => api.createTask(formData),
+    onSuccess: (savedTask) => {
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) => [savedTask, ...prev]);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  // TanStack Mutation: Update Task in MongoDB Atlas
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, formData }: { id: string; formData: TaskFormData }) =>
+      api.updateTask(id, formData),
+    onSuccess: (updatedTask) => {
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+        prev.map((t) => (t._id === updatedTask._id ? updatedTask : t))
+      );
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  // TanStack Mutation: Toggle Task Status in MongoDB Atlas with optimistic update
+  const toggleStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status?: 'pending' | 'completed' }) =>
+      api.patchTaskStatus(id, status),
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+        prev.map((t) => {
+          if (t._id !== id) return t;
+          const targetStatus = status || (t.status === 'completed' ? 'pending' : 'completed');
+          return {
+            ...t,
+            status: targetStatus,
+            updatedAt: new Date().toISOString(),
+          };
+        })
+      );
+
+      return { previousTasks };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  // TanStack Mutation: Delete Task from MongoDB Atlas with optimistic update
+  const deleteTaskMutation = useMutation({
+    mutationFn: (id: string) => api.deleteTask(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+        prev.filter((t) => t._id !== id)
+      );
+
+      return { previousTasks };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
   const addTask = async (formData: TaskFormData) => {
-    const tempId = `temp-${Date.now()}`;
-    const optimisticTask: Task = {
-      _id: tempId,
-      title: formData.title,
-      description: formData.description,
-      date: formData.date,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      priority: formData.priority,
-      status: 'pending',
-      weekStart: getMondayOfDate(formData.date),
-      createdAt: new Date().toISOString(),
-    };
-
-    setTasks((prev) => [optimisticTask, ...prev]);
-
-    try {
-      const savedTask = await api.createTask(formData);
-      setTasks((prev) => prev.map((t) => (t._id === tempId ? savedTask : t)));
-    } catch (err) {
-      console.error('[API Create Failed, reverting]', err);
-      setTasks((prev) => prev.filter((t) => t._id !== tempId));
-    }
+    return addTaskMutation.mutateAsync(formData);
   };
 
-  // Update Task in MongoDB
   const updateTask = async (id: string, formData: TaskFormData) => {
-    const previous = tasks;
-    setTasks((prev) =>
-      prev.map((t) =>
-        t._id === id
-          ? {
-              ...t,
-              title: formData.title,
-              description: formData.description,
-              date: formData.date,
-              startTime: formData.startTime,
-              endTime: formData.endTime,
-              priority: formData.priority,
-              weekStart: getMondayOfDate(formData.date),
-              updatedAt: new Date().toISOString(),
-            }
-          : t
-      )
-    );
-
-    try {
-      const updated = await api.updateTask(id, formData);
-      setTasks((prev) => prev.map((t) => (t._id === id ? updated : t)));
-    } catch (err) {
-      console.error('[API Update Failed, reverting]', err);
-      setTasks(previous);
-    }
+    return updateTaskMutation.mutateAsync({ id, formData });
   };
 
-  // Toggle Task Status in MongoDB
   const toggleTaskStatus = async (id: string) => {
     const target = tasks.find((t) => t._id === id);
-    if (!target) return;
-
-    const previous = tasks;
-    const newStatus = target.status === 'completed' ? 'pending' : 'completed';
-
-    setTasks((prev) =>
-      prev.map((t) =>
-        t._id === id
-          ? {
-              ...t,
-              status: newStatus,
-              updatedAt: new Date().toISOString(),
-            }
-          : t
-      )
-    );
-
-    try {
-      await api.toggleTaskStatus(id, newStatus);
-    } catch (err) {
-      console.error('[API Toggle Failed, reverting]', err);
-      setTasks(previous);
-    }
+    const newStatus = target && target.status === 'completed' ? 'pending' : 'completed';
+    return toggleStatusMutation.mutateAsync({ id, status: newStatus });
   };
 
-  // Delete Task from MongoDB
   const deleteTask = async (id: string) => {
-    const previous = tasks;
-    setTasks((prev) => prev.filter((t) => t._id !== id));
+    return deleteTaskMutation.mutateAsync(id);
+  };
 
-    try {
-      await api.deleteTask(id);
-    } catch (err) {
-      console.error('[API Delete Failed, reverting]', err);
-      setTasks(previous);
-    }
+  const refreshTasks = async () => {
+    await tasksQuery.refetch();
   };
 
   return {
@@ -219,6 +184,6 @@ export function useTasks() {
     updateTask,
     toggleTaskStatus,
     deleteTask,
-    refreshTasks: loadServerTasks,
+    refreshTasks,
   };
 }

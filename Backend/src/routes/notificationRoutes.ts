@@ -15,3 +15,4 @@ router.delete('/', clearNotifications);
 router.patch('/:id/read', markNotificationRead);
 
 export default router;
+
