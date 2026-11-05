@@ -1,13 +1,5 @@
 # To-Do List Mobile App (MERN Stack)
 
-[![Node.js](https://img.shields.io/badge/Node.js-v18%2B-green?logo=node.js)](https://nodejs.org/)
-[![Express.js](https://img.shields.io/badge/Express-v4.21-lightgrey?logo=express)](https://expressjs.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-green?logo=mongodb)](https://mongoosejs.com/)
-[![React](https://img.shields.io/badge/React-v19-blue?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-v5.7-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-[![Vite](https://img.shields.io/badge/Vite-v8-purple?logo=vite)](https://vitejs.dev/)
-
 A modern, responsive, mobile-first task management web application built on the **MERN Stack** (MongoDB, Express, React 19 + TypeScript, Node.js) and styled with **Tailwind CSS**.
 
 ---
