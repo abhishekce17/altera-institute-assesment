@@ -19,7 +19,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
     navigate('/home');
   });
   return (
-    <div className="flex-1 flex flex-col md:flex-row bg-white h-full min-h-screen md:min-h-[850px] overflow-hidden">
+    <div className="flex-1 flex flex-col md:flex-row bg-white h-full min-h-screen overflow-hidden">
       {/* Hero graphic section: Top on mobile, Left half on desktop */}
       <div className="relative w-full md:w-1/2 h-[55vh] md:h-auto overflow-hidden bg-[#3866F2] flex items-center justify-center">
         <img

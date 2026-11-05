@@ -57,7 +57,7 @@ export const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-white min-h-screen md:min-h-[850px] p-5 md:p-8">
+    <div className="flex-1 flex flex-col bg-white min-h-screen p-5 md:p-8">
       <div className="w-full max-w-3xl mx-auto flex-1 flex-col flex">
         {/* Top Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">

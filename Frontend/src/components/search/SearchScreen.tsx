@@ -42,7 +42,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = (props) => {
   }, [activeTasks, query]);
 
   return (
-    <div className="flex-1 flex flex-col bg-white min-h-screen md:min-h-[850px] p-5 md:p-8">
+    <div className="flex-1 flex flex-col bg-white min-h-screen p-5 md:p-8">
       <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col">
         {/* Top Bar with Back Arrow */}
         <div className="flex items-center gap-3 mb-6">
