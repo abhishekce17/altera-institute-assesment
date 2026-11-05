@@ -67,3 +67,18 @@ body {
     width: calc((100% - 48px) / 7);
   }
 }
+
+/* Suppress Netlify branding badge and injected frames */
+#nl-badge-frame,
+iframe[title*="Netlify"],
+iframe[src*="netlify"],
+[data-netlify-site-id] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  z-index: -9999 !important;
+}

@@ -4,7 +4,41 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>To-Do List</title>
+    <style>
+      #nl-badge-frame,
+      iframe[title="Powered by Netlify"],
+      iframe[src*="netlify"],
+      iframe[id*="netlify"],
+      [data-netlify-site-id] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        width: 0 !important;
+        height: 0 !important;
+        z-index: -9999 !important;
+      }
+    </style>
+    <script>
+      (function() {
+        var removeBadge = function() {
+          var badge = document.getElementById('nl-badge-frame') || document.querySelector('iframe[title*="Netlify"]');
+          if (badge && badge.parentNode) {
+            badge.parentNode.removeChild(badge);
+          }
+        };
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', removeBadge);
+        } else {
+          removeBadge();
+        }
+        try {
+          new MutationObserver(removeBadge).observe(document.documentElement, { childList: true, subtree: true });
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
