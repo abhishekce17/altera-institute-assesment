@@ -169,7 +169,7 @@ cp Backend/.env.example Backend/.env
 #### Example `Backend/.env`:
 ```env
 PORT=5001
-MONGODB_URI=mongodb+srv://admin-Abhi:<password>@cluster0.esdzida.mongodb.net/todo-app?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/todo-app?retryWrites=true&w=majority
 CLIENT_URL=http://localhost:5173
 NODE_ENV=development
 ```
