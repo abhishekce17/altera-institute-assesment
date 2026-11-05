@@ -21,8 +21,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
 
   return (
     <div className="w-full h-screen max-h-screen flex flex-col md:flex-row bg-white overflow-hidden">
-      {/* Hero graphic section: Top on mobile (48vh), Left half on desktop (100% height) */}
-      <div className="relative w-full md:w-1/2 h-[48vh] md:h-full overflow-hidden bg-[#3866F2] flex items-center justify-center shrink-0">
+      {/* Hero graphic section: Top on mobile (~52vh), Left half on desktop (100% height) */}
+      <div className="relative w-full md:w-1/2 h-[52vh] md:h-full overflow-hidden bg-[#3866F2] flex items-center justify-center shrink-0">
         <img
           src={onboardingBg}
           alt="Onboarding Background"
@@ -30,11 +30,14 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
         />
       </div>
 
-      {/* Information and Call-to-Action: Bottom on mobile, Right half vertically centered on desktop */}
-      <div className="w-full md:w-1/2 flex-1 md:h-full flex flex-col justify-between md:justify-center px-6 md:px-14 py-6 md:py-10 bg-white overflow-y-auto">
-        <div className="space-y-6 max-w-md w-full mx-auto">
-          {/* Header */}
-          <div className="space-y-2.5">
+      {/* Information and Call-to-Action:
+          - Mobile: justify-between places text at top and 'Get Started' pinned at the bottom
+          - Desktop: md:justify-center vertically centers the content and button with md:gap-8
+      */}
+      <div className="w-full md:w-1/2 flex-1 md:h-full flex flex-col justify-between md:justify-center md:gap-8 px-7 md:px-16 pt-6 md:py-12 pb-8 md:pb-12 bg-white overflow-y-auto">
+        {/* Child 1: Title, Description, and Desktop Features */}
+        <div className="space-y-4 md:space-y-6 max-w-md w-full md:mx-auto">
+          <div className="space-y-2 md:space-y-3">
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
               Manage What To Do
             </h1>
@@ -43,7 +46,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
             </p>
           </div>
 
-          {/* Desktop Feature Highlights */}
+          {/* Desktop Feature Highlights only on md+ */}
           <div className="hidden md:flex flex-col gap-3.5 pt-1">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-blue-50 text-[#3866F2] flex items-center justify-center shrink-0">
@@ -75,17 +78,17 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Action Button */}
-          <div className="pt-2 md:pt-4">
-            <button
-              type="button"
-              onClick={handleGetStarted}
-              className="w-full py-3.5 md:py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-base transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
-            >
-              Get Started
-            </button>
-          </div>
+        {/* Child 2: Action Button (Pinned to bottom on mobile, sits right below features on desktop) */}
+        <div className="w-full max-w-md md:mx-auto">
+          <button
+            type="button"
+            onClick={handleGetStarted}
+            className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-base transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+          >
+            Get Started
+          </button>
         </div>
       </div>
     </div>
