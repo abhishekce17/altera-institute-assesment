@@ -18,10 +18,11 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
     }
     navigate('/home');
   });
+
   return (
-    <div className="flex-1 flex flex-col md:flex-row bg-white h-full min-h-screen overflow-hidden">
-      {/* Hero graphic section: Top on mobile, Left half on desktop */}
-      <div className="relative w-full md:w-1/2 h-[55vh] md:h-auto overflow-hidden bg-[#3866F2] flex items-center justify-center">
+    <div className="w-full h-screen max-h-screen flex flex-col md:flex-row bg-white overflow-hidden">
+      {/* Hero graphic section: Top on mobile (48vh), Left half on desktop (100% height) */}
+      <div className="relative w-full md:w-1/2 h-[48vh] md:h-full overflow-hidden bg-[#3866F2] flex items-center justify-center shrink-0">
         <img
           src={onboardingBg}
           alt="Onboarding Background"
@@ -29,10 +30,11 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
         />
       </div>
 
-      {/* Information and Call-to-Action: Bottom on mobile, Right half on desktop */}
-      <div className="flex-1 flex flex-col justify-between px-7 md:px-12 pt-4 md:py-16 pb-8 bg-white">
-        <div className="space-y-6 pt-2 md:pt-8 max-w-md">
-          <div className="space-y-3">
+      {/* Information and Call-to-Action: Bottom on mobile, Right half vertically centered on desktop */}
+      <div className="w-full md:w-1/2 flex-1 md:h-full flex flex-col justify-between md:justify-center px-6 md:px-14 py-6 md:py-10 bg-white overflow-y-auto">
+        <div className="space-y-6 max-w-md w-full mx-auto">
+          {/* Header */}
+          <div className="space-y-2.5">
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
               Manage What To Do
             </h1>
@@ -42,10 +44,10 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
           </div>
 
           {/* Desktop Feature Highlights */}
-          <div className="hidden md:grid grid-cols-1 gap-4 pt-2">
-            <div className="flex items-start gap-3">
+          <div className="hidden md:flex flex-col gap-3.5 pt-1">
+            <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-blue-50 text-[#3866F2] flex items-center justify-center shrink-0">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-4 h-4 stroke-[2]" />
               </div>
               <div>
                 <h2 className="text-sm font-bold text-slate-800">Weekly Calendar Strip</h2>
@@ -53,9 +55,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <TrendingUp className="w-4 h-4" />
+                <TrendingUp className="w-4 h-4 stroke-[2]" />
               </div>
               <div>
                 <h2 className="text-sm font-bold text-slate-800">Visual Progress Metrics</h2>
@@ -63,9 +65,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                <CheckSquare className="w-4 h-4" />
+                <CheckSquare className="w-4 h-4 stroke-[2]" />
               </div>
               <div>
                 <h2 className="text-sm font-bold text-slate-800">Intuitive Task Controls</h2>
@@ -73,17 +75,17 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onGetStarted
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Action Button */}
-        <div className="pt-6 md:pt-8 max-w-md">
-          <button
-            type="button"
-            onClick={handleGetStarted}
-            className="w-full py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-base transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
-          >
-            Get Started
-          </button>
+          {/* Action Button */}
+          <div className="pt-2 md:pt-4">
+            <button
+              type="button"
+              onClick={handleGetStarted}
+              className="w-full py-3.5 md:py-4 px-6 bg-[#3866F2] hover:bg-[#2B52D4] active:scale-[0.98] text-white font-semibold text-base transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+            >
+              Get Started
+            </button>
+          </div>
         </div>
       </div>
     </div>
