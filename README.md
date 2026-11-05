@@ -73,7 +73,6 @@ SDE-Assignement/
 │   ├── package.json
 │   └── vite.config.ts          # Vite configuration with dev proxy & Tailwind
 │
-├── .planning/                  # GSD planning specs (PROJECT, REQUIREMENTS, ROADMAP, STATE)
 └── netlify.toml                # Root Netlify configuration
 ```
 
