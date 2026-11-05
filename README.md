@@ -7,7 +7,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-v5.7-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 [![Vite](https://img.shields.io/badge/Vite-v8-purple?logo=vite)](https://vitejs.dev/)
-[![Tests](https://img.shields.io/badge/Tests-16%2F16%20Passing-brightgreen?logo=vitest)](https://vitest.dev/)
 
 A modern, responsive, mobile-first task management web application built on the **MERN Stack** (MongoDB, Express, React 19 + TypeScript, Node.js) and styled with **Tailwind CSS**, designed in strict accordance with the SDE I Assessment specification and Figma design.
 
@@ -253,41 +252,6 @@ The seed script dynamically calculates dates relative to the **current calendar 
 - **Idempotent**: Re-running the seed resets `user@test.com`'s tasks back to the clean baseline without duplicating records.
 - **Clean Inbox**: Wipes artificial notifications to keep the notification tray clean and uncluttered.
 - **Auto-Calculated `weekStart`**: Every task is automatically tagged with its Monday-based ISO week boundary for correct weekly metrics calculation.
-
----
-
-## 🧪 Running Automated Tests
-
-The backend includes a comprehensive automated test suite powered by **Vitest** and **Supertest** covering all CRUD routes, boundary validations, search queries, and weekly progress statistics:
-
-```bash
-cd Backend
-npm test
-```
-
-### Test Suite Results:
-```text
-✓ tests/task.test.ts (16 tests) 966ms
-   ✓ Task API Endpoints > POST /api/tasks > should create a new task with valid data and auto-compute weekStart
-   ✓ Task API Endpoints > POST /api/tasks > should fail with 400 if title is missing or empty
-   ✓ Task API Endpoints > POST /api/tasks > should fail with 400 if date format is invalid
-   ✓ Task API Endpoints > POST /api/tasks > should fail with 400 if startTime or endTime is missing
-   ✓ Task API Endpoints > GET /api/tasks > should retrieve list of tasks
-   ✓ Task API Endpoints > GET /api/tasks > should filter tasks by date
-   ✓ Task API Endpoints > GET /api/tasks > should filter tasks by keyword search
-   ✓ Task API Endpoints > GET /api/tasks/stats/weekly > should calculate weekly open vs completed metrics correctly
-   ✓ Task API Endpoints > GET /api/tasks/stats/weekly > should return 0% progress when no tasks exist for the week
-   ✓ Task API Endpoints > GET /api/tasks/:id > should retrieve task by ID
-   ✓ Task API Endpoints > GET /api/tasks/:id > should return 404 if task ID does not exist
-   ✓ Task API Endpoints > GET /api/tasks/:id > should return 400 for invalid ID format
-   ✓ Task API Endpoints > PUT /api/tasks/:id > should update task attributes and recalculate weekStart if date changes
-   ✓ Task API Endpoints > PATCH /api/tasks/:id/status > should toggle task status between pending and completed
-   ✓ Task API Endpoints > PATCH /api/tasks/:id/status > should assign explicit status when provided
-   ✓ Task API Endpoints > DELETE /api/tasks/:id > should delete task and remove it from database
-
-Test Files  1 passed (1)
-     Tests  16 passed (16)
-```
 
 ---
 
