@@ -344,34 +344,6 @@ Base URL: `http://localhost:5001/api` (or `/api` via Vite dev proxy)
 
 ---
 
-## 🌐 Production Deployment Guide
-
-### Deploying Frontend to Netlify
-1. Connect your GitHub repository to [Netlify](https://app.netlify.com/).
-2. Select repository settings:
-   - **Base directory**: `Frontend` (or leave empty if using root `netlify.toml`)
-   - **Build command**: `npm run build`
-   - **Publish directory**: `Frontend/dist` (or `dist`)
-3. Add Environment Variable in Netlify (Site Configuration -> Environment variables):
-   - `VITE_API_BASE_URL`: `https://<your-backend-api-url>/api`
-4. Click **Deploy Site**.
-*The included `netlify.toml` and `public/_redirects` automatically configure Single Page Application rewrites.*
-
-### Deploying Backend to Cloud (Render / Railway)
-1. In [Render](https://render.com/) or [Railway](https://railway.app/), create a **New Web Service** connected to the repository.
-2. Configure settings:
-   - **Root Directory**: `Backend`
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm start`
-3. Configure Environment Variables:
-   - `PORT`: `5001`
-   - `NODE_ENV`: `production`
-   - `MONGODB_URI`: `<Your MongoDB Atlas connection URI>`
-   - `CLIENT_URL`: `https://<your-netlify-app-name>.netlify.app`
-4. Save and deploy.
-
----
-
 ## 📄 License
 This project is submitted for the SDE I Assessment. All rights reserved.
 
