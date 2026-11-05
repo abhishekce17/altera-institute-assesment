@@ -8,20 +8,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 [![Vite](https://img.shields.io/badge/Vite-v8-purple?logo=vite)](https://vitejs.dev/)
 
-A modern, responsive, mobile-first task management web application built on the **MERN Stack** (MongoDB, Express, React 19 + TypeScript, Node.js) and styled with **Tailwind CSS**, designed in strict accordance with the SDE I Assessment specification and Figma design.
-
----
-
-## 📱 Visual Previews & Figma Alignment
-
-The application faithfully implements all four frames from the [Figma Design](https://www.figma.com/design/mz2PJoTwa5DxYrdrFPem3f/To-Do-List-Mobileapp?node-id=0-1&t=7XVtCMzMmLV08Avn-1):
-
-| Screen | Figma Specification | Implementation Highlights |
-|---|---|---|
-| **1. Onboarding** | Frame 1 | Hero background graphic (`onboarding-bg.png`), typography, *"Get Started"* CTA, and persistent state in `localStorage`. |
-| **2. Home Screen** | Frame 2 | Top search bar, settings/notification icons, 7-day calendar strip selector, dual summary cards, weekly progress bar, and floating action button (`+`). |
-| **3. New/Edit Task** | Frame 3 | Slide-up bottom sheet modal with Title, Start/End Time pickers, Date picker, Description textarea, Priority chips (`Low`, `Medium`, `High`), and validation. |
-| **4. Search Screen** | Frame 9 | Back navigation `←`, active search input, real-time keyword filtering on title/description, inline status toggling, editing, and deletion. |
+A modern, responsive, mobile-first task management web application built on the **MERN Stack** (MongoDB, Express, React 19 + TypeScript, Node.js) and styled with **Tailwind CSS**.
 
 ---
 
